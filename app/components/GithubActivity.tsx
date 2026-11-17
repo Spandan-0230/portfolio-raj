@@ -172,54 +172,62 @@ export default function GithubActivity() {
       const p = currentProgress.current;
       const diffVelocity = targetProgress.current - currentProgress.current;
 
-      // 1. Header Choreography (emerges smoothly from 0.02 to 0.32)
+      // 1. Header Choreography (Fluid entrance, subtle parallax drift, graceful exit)
       if (headerRef.current) {
-        let hOp = 0, hTr = 35, hBl = 8;
-        if (p <= 0.02) {
-          hOp = 0;
-          hTr = 35;
-          hBl = 8;
-        } else if (p < 0.32) {
-          const t = (p - 0.02) / 0.30;
-          hOp = t;
-          hTr = (1 - t) * 35;
-          hBl = (1 - t) * 8;
+        let hOp = 1, hTr = 0, hBl = 0;
+        if (p < 0.20) {
+          const t = Math.max(0, p / 0.20);
+          const eased = 1 - Math.pow(1 - t, 3);
+          hOp = 0.5 + 0.5 * eased;
+          hTr = (1 - eased) * 28;
+          hBl = (1 - eased) * 4;
+        } else if (p > 0.78) {
+          const exit = Math.min(1, Math.max(0, (p - 0.78) / 0.18));
+          hOp = Math.max(0, 1 - exit);
+          hTr = -exit * 28;
+          hBl = exit * 6;
         } else {
-          hOp = 1;
-          hTr = 0;
-          hBl = 0;
+          // Subtle organic parallax drift during main scroll
+          hTr = (p - 0.49) * -10;
         }
         headerRef.current.style.opacity = hOp.toFixed(3);
         headerRef.current.style.transform = `translateY(${hTr.toFixed(1)}px)`;
         headerRef.current.style.filter = `blur(${hBl.toFixed(1)}px)`;
       }
 
-      // 2. Ambient Backlight Glow (0.01 to 0.35)
+      // 2. Ambient Backlight Glow
       if (ambientGlowRef.current) {
-        const glowOp = Math.min(1, Math.max(0, (p - 0.01) / 0.35));
+        let glowOp = 1;
+        if (p < 0.22) {
+          const t = Math.max(0, p / 0.22);
+          glowOp = 0.3 + 0.7 * t;
+        } else if (p > 0.78) {
+          const exit = Math.min(1, Math.max(0, (p - 0.78) / 0.18));
+          glowOp = Math.max(0, 1 - exit);
+        }
         ambientGlowRef.current.style.opacity = glowOp.toFixed(3);
       }
 
-      // 3. Unified Card Choreography (0.12 to 0.58)
+      // 3. Unified Obsidian Card Choreography (Emerges with scale & elevation, floats with velocity inertia, dissolves on exit)
       if (cardRef.current) {
-        let cOp = 0, cTr = 55, cScale = 0.88, cBl = 10;
-        if (p <= 0.12) {
-          cOp = 0;
-          cTr = 55;
-          cScale = 0.88;
-          cBl = 10;
-        } else if (p < 0.58) {
-          const raw = (p - 0.12) / 0.46;
-          const eased = 1 - Math.pow(1 - raw, 3);
-          cOp = raw;
-          cTr = (1 - eased) * 55;
-          cScale = 0.88 + eased * 0.12;
-          cBl = (1 - raw) * 10;
+        let cOp = 1, cTr = 0, cScale = 1, cBl = 0;
+
+        if (p < 0.24) {
+          const t = Math.max(0, p / 0.24);
+          const eased = 1 - Math.pow(1 - t, 3);
+          cOp = 0.5 + 0.5 * eased;
+          cTr = (1 - eased) * 48;
+          cScale = 0.92 + 0.08 * eased;
+          cBl = (1 - eased) * 6;
+        } else if (p > 0.78) {
+          const exit = Math.min(1, Math.max(0, (p - 0.78) / 0.18));
+          cOp = Math.max(0, 1 - exit);
+          cTr = -exit * 45;
+          cScale = 1 - exit * 0.06;
+          cBl = exit * 8;
         } else {
-          cOp = 1;
-          cTr = 0;
-          cScale = 1;
-          cBl = 0;
+          // Subtle organic parallax drift during active interaction
+          cTr = (p - 0.51) * -14;
         }
 
         const floatingInertia = diffVelocity * 28;
@@ -230,19 +238,17 @@ export default function GithubActivity() {
         cardRef.current.style.filter = `blur(${cBl.toFixed(1)}px)`;
       }
 
-      // 4. Sub-footer Choreography (0.35 to 0.75)
+      // 4. Sub-footer Choreography
       if (footerRef.current) {
-        let fOp = 0, fTr = 20;
-        if (p <= 0.35) {
-          fOp = 0;
-          fTr = 20;
-        } else if (p < 0.75) {
-          const t = (p - 0.35) / 0.40;
+        let fOp = 1, fTr = 0;
+        if (p < 0.26) {
+          const t = Math.max(0, p / 0.26);
           fOp = t;
-          fTr = (1 - t) * 20;
-        } else {
-          fOp = 1;
-          fTr = 0;
+          fTr = (1 - t) * 16;
+        } else if (p > 0.78) {
+          const exit = Math.min(1, Math.max(0, (p - 0.78) / 0.18));
+          fOp = Math.max(0, 1 - exit);
+          fTr = -exit * 18;
         }
         footerRef.current.style.opacity = fOp.toFixed(3);
         footerRef.current.style.transform = `translateY(${fTr.toFixed(1)}px)`;
@@ -373,7 +379,7 @@ export default function GithubActivity() {
       style={{
         position: "relative",
         width: "100%",
-        height: "200vh", // Scrubbing distance matching LanguageShowcase
+        height: "260vh", // Scrubbing distance giving ample room to interact & explore
         backgroundColor: "#000000",
         color: "#ffffff",
         zIndex: 20,
@@ -413,7 +419,7 @@ export default function GithubActivity() {
               "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(57, 211, 83, 0.08) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(0, 0, 0, 0) 70%)",
             pointerEvents: "none",
             borderRadius: "50%",
-            opacity: 0,
+            opacity: 1,
           }}
         />
 
@@ -439,12 +445,9 @@ export default function GithubActivity() {
           </div>
 
           {/* =========================================================================
-              2. UNIFIED OBSIDIAN ACTIVITY CARD
+              2. UNIFIED OBSIDIAN ACTIVITY CARD (Styled from Reference Card)
               ========================================================================= */}
           <div ref={cardRef} className="unified-card">
-            {/* Subtle perimeter border beam on card hover */}
-            <div className="card-border-beam" />
-
             <div className="card-inner">
               {/* -------------------------------------------------------------
                   LEFT COLUMN: Profile & Bio & Actions
@@ -687,16 +690,6 @@ export default function GithubActivity() {
 
                 {/* Bottom Legend Bar inside Right Column */}
                 <div className="right-bottom-bar">
-                  <div className="bottom-left-stat">
-                    <span className="dot-indicator" />
-                    <span>
-                      {activeTotal} total contributions in{" "}
-                      {selectedYear === currentCalendarYear
-                        ? "the trailing 52 weeks"
-                        : selectedYear}
-                    </span>
-                  </div>
-
                   <div className="legend-group">
                     <span className="legend-tag">Less</span>
                     <div className="legend-square" style={{ backgroundColor: "#161720" }} />
@@ -721,7 +714,7 @@ export default function GithubActivity() {
               3. SUB-FOOTER (Below the Card)
               ========================================================================= */}
           <div ref={footerRef} className="section-footer">
-            <span className="footer-quote">A little progress, every day.</span>
+            <span className="footer-quote">Small commits. Meaningful progress</span>
             <span className="footer-caption">Contribution history · {selectedYear}</span>
           </div>
         </div>
@@ -763,9 +756,9 @@ export default function GithubActivity() {
           text-align: center;
           gap: 8px;
           width: 100%;
-          opacity: 0;
-          transform: translateY(35px);
-          filter: blur(8px);
+          opacity: 1;
+          transform: translateY(0);
+          filter: blur(0);
           will-change: transform, opacity, filter;
         }
 
@@ -774,16 +767,16 @@ export default function GithubActivity() {
           font-family: 'HeroAlphabet', 'HeroOrbitron', sans-serif;
           font-size: clamp(2rem, 3.8vw, 3.5rem);
           font-weight: 800;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.12em;
           line-height: 1.12;
           text-transform: uppercase;
           text-align: center;
-          background-image: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 40%, #E2E8F0 75%, #94A3B8 100%);
+          background-image: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #D1FAD7 60%, #56E374 84%, #39D353 100%);
           -webkit-background-clip: text;
           background-clip: text;
           -webkit-text-fill-color: transparent;
           color: transparent;
-          filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.9));
+          filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(57, 211, 83, 0.28));
         }
 
         .subtitle-text {
@@ -796,69 +789,39 @@ export default function GithubActivity() {
         }
 
         /* -----------------------------------------------------------------
-           UNIFIED CARD CONTAINER
+           UNIFIED CARD CONTAINER (Obsidian Block UI Styled from Reference)
            ----------------------------------------------------------------- */
         .unified-card {
           position: relative;
-          border-radius: 24px;
-          padding: 1.5px;
+          border-radius: 32px;
           overflow: hidden;
-          background: rgba(255, 255, 255, 0.08);
-          box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.85);
-          transition: box-shadow 0.3s ease;
+          background: linear-gradient(180deg, #15161a 0%, #111215 45%, #0b0c0e 100%);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 28px 70px -12px rgba(0, 0, 0, 0.92),
+            0 12px 30px -8px rgba(0, 0, 0, 0.8),
+            inset 0 1px 0 rgba(255, 255, 255, 0.14);
+          transition: box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+            border-color 0.35s ease;
           width: 100%;
           box-sizing: border-box;
-          opacity: 0;
-          transform: translateY(55px) scale(0.88);
-          filter: blur(10px);
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
           will-change: transform, opacity, filter;
         }
         .unified-card:hover {
-          box-shadow: 0 26px 60px -8px rgba(0, 0, 0, 0.95),
-            0 0 0 1px rgba(255, 255, 255, 0.18);
-        }
-
-        .card-border-beam {
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: conic-gradient(
-            from 0deg,
-            transparent 0deg,
-            transparent 80deg,
-            rgba(255, 255, 255, 0.18) 90deg,
-            #ffffff 100deg,
-            rgba(255, 255, 255, 0.18) 110deg,
-            transparent 120deg,
-            transparent 360deg
-          );
-          animation: spin-beam 3.6s linear infinite;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          pointer-events: none;
-          z-index: 0;
-        }
-        .unified-card:hover .card-border-beam {
-          opacity: 1;
-        }
-
-        @keyframes spin-beam {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
+          border-color: rgba(255, 255, 255, 0.22);
+          box-shadow: 0 36px 85px -12px rgba(0, 0, 0, 0.98),
+            0 18px 40px -10px rgba(0, 0, 0, 0.85),
+            inset 0 1px 0 rgba(255, 255, 255, 0.22);
         }
 
         .card-inner {
           position: relative;
           z-index: 1;
           width: 100%;
-          border-radius: 22.5px;
-          background-color: #07080b;
+          border-radius: 31px;
+          background: transparent;
           padding: 34px 38px;
           box-sizing: border-box;
           display: flex;
@@ -1136,7 +1099,7 @@ export default function GithubActivity() {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           font-size: 12px;
           font-weight: 600;
-          cursor: pointer;
+          cursor: url('/cursor.png') 0 0, pointer;
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           user-select: none;
           line-height: 1;
@@ -1227,7 +1190,7 @@ export default function GithubActivity() {
         }
 
         .svg-day-rect {
-          cursor: pointer;
+          cursor: url('/cursor.png') 0 0, pointer;
           transition: transform 0.12s ease-out, stroke 0.12s ease;
           transform-origin: center;
           transform-box: fill-box;
@@ -1241,25 +1204,9 @@ export default function GithubActivity() {
         .right-bottom-bar {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-end;
           width: 100%;
           padding-top: 6px;
-        }
-
-        .bottom-left-stat {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.45);
-        }
-
-        .dot-indicator {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background-color: rgba(255, 255, 255, 0.45);
         }
 
         .legend-group {

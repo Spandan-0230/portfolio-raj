@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import LanguageShowcase from "./components/LanguageShowcase";
 import GithubActivity from "./components/GithubActivity";
+import HammerShowcase from "./components/HammerShowcase";
 import SmoothScrollDamper from "./components/SmoothScrollDamper";
 import ScrollPrompt from "./components/ScrollPrompt";
 
@@ -461,7 +462,7 @@ export default function Home() {
               userSelect: "none",
             }}
           >
-            {/* Name with S·H·A·G·A Octagonal Chamfered Alphabet Design */}
+            {/* Name with S·H·A·G·A Octagonal Chamfered Alphabet Design & Black/White Dual-Tone */}
             <h1
               style={{
                 margin: 0,
@@ -472,12 +473,11 @@ export default function Home() {
                 lineHeight: 1.08,
                 textTransform: "uppercase",
                 backgroundImage:
-                  "linear-gradient(180deg, #ffffff 0%, #e2e8f0 68%, #94a3b8 100%)",
+                  "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #A1A1AA 58%, #3F3F46 78%, #09090B 94%, #000000 100%)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 color: "transparent",
-                filter: "drop-shadow(0 0 25px rgba(255, 255, 255, 0.28))",
               }}
             >
               <span style={{ display: "block" }}>SPANDAN B</span>
@@ -640,11 +640,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Languages Showcase Section */}
-      <LanguageShowcase />
-
-      {/* GitHub Contribution Activity Section */}
+      {/* Page 2: GitHub Contribution Activity Section */}
       <GithubActivity />
+
+      {/* Page 3: Hammer 3D Canvas Scroll Animation */}
+      <HammerShowcase />
+
+      {/* Page 4: Languages Showcase Section */}
+      <LanguageShowcase />
 
       {/* Smooth Page-Wise Scroll Damper with Haptic Feedback */}
       <SmoothScrollDamper />

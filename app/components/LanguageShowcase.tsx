@@ -308,18 +308,14 @@ export default function LanguageShowcase() {
       const p = currentProgress.current;
       const diffVelocity = targetProgress.current - currentProgress.current;
 
-      // 1. Title Choreography (emerges immediately from 0.00 to 0.20)
+      // 1. Title Choreography (emerges immediately on landing)
       if (titleRef.current) {
-        let tOp = 0, tTr = 25, tBl = 6;
-        if (p <= 0) {
-          tOp = 0;
-          tTr = 25;
-          tBl = 6;
-        } else if (p < 0.20) {
-          const t = p / 0.20;
-          tOp = t;
-          tTr = (1 - t) * 25;
-          tBl = (1 - t) * 6;
+        let tOp = 1, tTr = 0, tBl = 0;
+        if (p < 0.05) {
+          const t = Math.max(0, p / 0.05);
+          tOp = 0.4 + t * 0.6;
+          tTr = (1 - t) * 12;
+          tBl = (1 - t) * 3;
         } else {
           tOp = 1;
           tTr = 0;
@@ -332,18 +328,18 @@ export default function LanguageShowcase() {
 
       // 2. Ambient Backlight Glow
       if (ambientGlowRef.current) {
-        const glowOp = Math.min(1, Math.max(0, p / 0.22));
+        const glowOp = Math.min(1, Math.max(0.2, p / 0.15));
         ambientGlowRef.current.style.opacity = glowOp.toFixed(3);
       }
 
-      // 3. Staggered Cascading 3D Floating Cards Choreography (0.16 to 0.86)
+      // 3. Staggered Cascading 3D Floating Cards Choreography (Smoothly visible on landing)
       const numCards = languages.length;
       cardRefs.current.forEach((cardEl, idx) => {
         if (!cardEl) return;
 
-        // Individual staggered timing slice for each card
-        const cardStart = 0.16 + (idx / numCards) * 0.40;
-        const cardDuration = 0.28;
+        // Individual staggered timing slice for each card starting immediately
+        const cardStart = 0.02 + (idx / numCards) * 0.20;
+        const cardDuration = 0.22;
         const cardEnd = cardStart + cardDuration;
 
         let cOp = 0, cTr = 65, cScale = 0.84, cBl = 10;
@@ -511,37 +507,24 @@ export default function LanguageShowcase() {
 
       {/* Symmetrical Layout, Hover Border Beam & Floating Physics Styles */}
       <style jsx>{`
-        /* Symmetrical Grid Layout */
+        /* Auto-Symmetrical Adaptive Layout */
         .languages-grid {
-          display: grid;
-          gap: 16px;
+          display: flex;
+          flex-wrap: wrap;
           justify-content: center;
           align-items: center;
+          gap: 16px;
+          max-width: 1100px;
           width: 100%;
           position: relative;
           z-index: 1;
           margin: 0 auto;
         }
 
-        /* Desktop (>= 1100px): all 8 fit in a single, balanced symmetrical row */
-        @media (min-width: 1100px) {
-          .languages-grid {
-            grid-template-columns: repeat(8, 120px);
-          }
-        }
-
-        /* Tablet/Medium (620px to 1099px): exactly 4 per row (2 rows of 4 = perfectly balanced) */
-        @media (min-width: 620px) and (max-width: 1099px) {
-          .languages-grid {
-            grid-template-columns: repeat(4, 120px);
-          }
-        }
-
-        /* Mobile (< 620px): exactly 2 per row (4 rows of 2 = perfectly balanced) */
         @media (max-width: 619px) {
           .languages-grid {
-            grid-template-columns: repeat(2, 110px);
-            gap: 14px;
+            gap: 12px;
+            max-width: 320px;
           }
         }
 
@@ -555,8 +538,9 @@ export default function LanguageShowcase() {
           padding: 1.5px; /* Creates the crisp border channel */
           background: rgba(255, 255, 255, 0.08);
           box-sizing: border-box;
-          cursor: pointer;
+          cursor: url('/cursor.png') 0 0, pointer;
           user-select: none;
+          flex-shrink: 0;
           box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.75);
 
           /* Initial un-scrolled hidden state (driven directly by scroll RAF loop) */

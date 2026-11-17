@@ -6,6 +6,15 @@ interface Checkpoint {
   id: string;
   name: string;
   top: number;
+  pageIdx: number;
+  type: "start" | "end";
+}
+
+interface PageInfo {
+  id: string;
+  name: string;
+  start: number;
+  end: number;
 }
 
 export default function SmoothScrollDamper() {
@@ -27,48 +36,75 @@ export default function SmoothScrollDamper() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Helper: calculate exact page boundaries (start & end of each page)
-    const getPageCheckpoints = (): Checkpoint[] => {
+    // Helper: Discover exact real-time page boundaries for all 4 pages
+    const getPages = (): PageInfo[] => {
       const winH = window.innerHeight;
-      const checkpoints: Checkpoint[] = [];
+      const pages: PageInfo[] = [];
 
-      // Page 1: Hero (top = 0)
-      checkpoints.push({ id: "hero-start", name: "Hero Start", top: 0 });
-
+      // Page 1: Hero
       const heroEl = document.getElementById("hero");
       if (heroEl) {
-        const heroEnd = Math.max(0, heroEl.offsetHeight - winH);
-        checkpoints.push({ id: "hero-end", name: "Hero End", top: heroEnd });
+        const start = 0;
+        const end = Math.max(0, heroEl.offsetHeight - winH);
+        pages.push({ id: "hero", name: "Hero", start, end });
       }
 
-      // Page 2: Languages
-      const langEl = document.getElementById("languages");
-      if (langEl) {
-        const langStart = langEl.offsetTop;
-        const langEnd = langStart + Math.max(0, langEl.offsetHeight - winH);
-        checkpoints.push({ id: "languages-start", name: "Languages Start", top: langStart });
-        checkpoints.push({ id: "languages-end", name: "Languages End", top: langEnd });
-      }
-
-      // Page 3: Activity
+      // Page 2: GitHub Activity
       const actEl = document.getElementById("activity");
       if (actEl) {
-        const actStart = actEl.offsetTop;
-        const actEnd = actStart + Math.max(0, actEl.offsetHeight - winH);
-        checkpoints.push({ id: "activity-start", name: "Activity Start", top: actStart });
-        checkpoints.push({ id: "activity-end", name: "Activity End", top: actEnd });
+        const start = actEl.offsetTop;
+        const end = start + Math.max(0, actEl.offsetHeight - winH);
+        pages.push({ id: "activity", name: "Activity", start, end });
       }
 
+      // Page 3: Hammer 3D
+      const hammerEl = document.getElementById("hammer");
+      if (hammerEl) {
+        const start = hammerEl.offsetTop;
+        const end = start + Math.max(0, hammerEl.offsetHeight - winH);
+        pages.push({ id: "hammer", name: "Hammer", start, end });
+      }
+
+      // Page 4: Languages Showcase
+      const langEl = document.getElementById("languages");
+      if (langEl) {
+        const start = langEl.offsetTop;
+        const end = start + Math.max(0, langEl.offsetHeight - winH);
+        pages.push({ id: "languages", name: "Languages", start, end });
+      }
+
+      return pages;
+    };
+
+    // Helper: Compute sequential checkpoints for both start & end of each page
+    const getPageCheckpoints = (pages: PageInfo[]): Checkpoint[] => {
+      const checkpoints: Checkpoint[] = [];
+      pages.forEach((p, pIdx) => {
+        checkpoints.push({
+          id: `${p.id}-start`,
+          name: `${p.name} Start`,
+          top: p.start,
+          pageIdx: pIdx,
+          type: "start",
+        });
+        checkpoints.push({
+          id: `${p.id}-end`,
+          name: `${p.name} End`,
+          top: p.end,
+          pageIdx: pIdx,
+          type: "end",
+        });
+      });
       return checkpoints;
     };
 
-    // Silent haptic feedback pulse (Web Vibration API - strictly soundless)
+    // Silent tactile haptic pulse (Web Vibration API - strictly soundless)
     const triggerHaptic = () => {
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         try {
           navigator.vibrate(12);
         } catch {
-          // Ignore if unsupported or restricted by browser permissions
+          // Ignore if unsupported or restricted by permissions
         }
       }
     };
@@ -81,78 +117,49 @@ export default function SmoothScrollDamper() {
       const deltaY = e.deltaY;
       const velocity = Math.abs(deltaY) / dt;
       const scrollY = window.scrollY;
-      const winH = window.innerHeight;
 
-      // Detection of fast acceleration: fast wheel flick or rapid momentum spin
+      // Detection of fast acceleration: rapid wheel flick or high-velocity spin
       const isFastAcceleration = Math.abs(deltaY) > 55 || velocity > 0.85;
 
-      // -----------------------------------------------------------------------
-      // SMART KINETIC BRIDGE: Page 1 End -> Page 2 Transition Acceleration
-      // If user is scrolling SLOWLY at the end of Page 1 into Page 2,
-      // dynamically adjust the scroll speed so they never get stuck in black space.
-      // -----------------------------------------------------------------------
-      const heroEl = document.getElementById("hero");
-      const langEl = document.getElementById("languages");
-      if (heroEl && langEl) {
-        const heroEnd = Math.max(0, heroEl.offsetHeight - winH);
-        const langStart = langEl.offsetTop;
+      const pages = getPages();
+      if (pages.length === 0) return;
+      const checkpoints = getPageCheckpoints(pages);
 
-        // Transition zone at the end of Page 1 entering Page 2
-        const transZoneStart = heroEnd - 320;
-        const inTransitionZone = scrollY >= transZoneStart && scrollY < langStart + 15;
-
-        if (inTransitionZone && deltaY > 0) {
-          // If slow scroll detected in transition zone:
-          if (!isFastAcceleration) {
-            e.preventDefault();
-            // If already within close approach (180px), smoothly glide straight into Page 2
-            if (scrollY >= heroEnd - 180) {
-              window.scrollTo({ top: langStart, behavior: "smooth" });
-              triggerHaptic();
-            } else {
-              // Otherwise, boost the slow scroll step by 2.8x so user moves responsively
-              const boosted = Math.max(Math.abs(deltaY) * 2.8, 85);
-              window.scrollBy({ top: boosted, behavior: "auto" });
-            }
-            return;
-          }
-        }
-      }
-
-      // If user is scrolling gently elsewhere, let native or normal scrubbing proceed with 100% fine control
-      if (!isFastAcceleration) {
-        return;
-      }
-
-      const checkpoints = getPageCheckpoints();
-      const ZONE_THRESHOLD = 110; // Trigger approach distance in pixels
+      // =======================================================================
+      // 1. UNIVERSAL LANDING LATCH (START & END OF EACH PAGE - FAST & SLOW)
+      // Every page boundary cleanly catches and lands the user, absorbing 1-3 ticks
+      // with tactile haptic feedback so content is absorbed before moving forward.
+      // =======================================================================
+      const ZONE_THRESHOLD = isFastAcceleration ? 135 : 65;
 
       for (const cp of checkpoints) {
         const dist = cp.top - scrollY;
 
-        // Check if accelerating towards this page boundary
+        // Direction-aware approach test
         const isApproaching =
-          (deltaY > 0 && dist > -35 && dist < ZONE_THRESHOLD) || // Scrolling down towards checkpoint
-          (deltaY < 0 && dist < 35 && dist > -ZONE_THRESHOLD);   // Scrolling up towards checkpoint
+          (deltaY > 0 && dist > -25 && dist < ZONE_THRESHOLD) || // Scrolling down towards boundary
+          (deltaY < 0 && dist < 25 && dist > -ZONE_THRESHOLD);   // Scrolling up towards boundary
 
         if (isApproaching) {
-          // If already latched at this boundary: count extra scroll ticks
+          // Already latched at this boundary: count ticks and hold
           if (latchState.current.checkpointId === cp.id) {
             latchState.current.ticks++;
             const elapsed = now - latchState.current.startTime;
+            const maxTicks = isFastAcceleration ? 3 : 2;
+            const maxDuration = isFastAcceleration ? 360 : 260;
 
-            // Absorb 1-3 extra fast scroll ticks or hold for ~380ms so user absorbs page content
-            if (latchState.current.ticks <= 3 && elapsed < 380) {
+            if (latchState.current.ticks <= maxTicks && elapsed < maxDuration) {
               e.preventDefault();
               window.scrollTo({ top: cp.top, behavior: "smooth" });
               return;
             } else {
-              // Latch released! Allow fast acceleration to resume smoothly
+              // Latch satisfied & released! Smooth scroll resumes into page
               latchState.current.passedCheckpointId = cp.id;
+              latchState.current.checkpointId = null;
               return;
             }
           } else if (latchState.current.passedCheckpointId !== cp.id) {
-            // New page boundary encountered: ENGAGE SMOOTH DAMPING LATCH!
+            // New page boundary encountered: ENGAGE LANDING LATCH!
             e.preventDefault();
             latchState.current = {
               checkpointId: cp.id,
@@ -161,12 +168,63 @@ export default function SmoothScrollDamper() {
               startTime: now,
             };
 
-            // Trigger silent tactile feedback
             triggerHaptic();
-
-            // Smoothly dock and settle onto the page boundary
             window.scrollTo({ top: cp.top, behavior: "smooth" });
             return;
+          }
+        }
+      }
+
+      // =======================================================================
+      // 2. INTER-PAGE KINETIC BRIDGES (SPEED ADJUSTMENT BETWEEN PAGE END & NEXT START)
+      // Smoothly boosts slow scroll across the transition gap between any two pages
+      // so users never feel stranded or take dozens of clicks to reach the next page.
+      // =======================================================================
+      if (!isFastAcceleration) {
+        for (let i = 0; i < pages.length - 1; i++) {
+          const currPage = pages[i];
+          const nextPage = pages[i + 1];
+
+          // Forward Transition: between currPage.end and nextPage.start
+          if (deltaY > 0) {
+            const gapStart = currPage.end - 40;
+            const gapEnd = nextPage.start;
+
+            if (scrollY >= gapStart && scrollY < gapEnd) {
+              e.preventDefault();
+
+              // Close approach: smoothly glide straight onto the next page start
+              if (scrollY >= nextPage.start - 140) {
+                window.scrollTo({ top: nextPage.start, behavior: "smooth" });
+                triggerHaptic();
+              } else {
+                // Responsive kinetic boost across inter-page space
+                const boosted = Math.max(Math.abs(deltaY) * 2.4, 75);
+                window.scrollBy({ top: boosted, behavior: "auto" });
+              }
+              return;
+            }
+          }
+
+          // Backward Transition: between nextPage.start and currPage.end
+          if (deltaY < 0) {
+            const gapTop = currPage.end;
+            const gapBottom = nextPage.start + 40;
+
+            if (scrollY <= gapBottom && scrollY > gapTop) {
+              e.preventDefault();
+
+              // Close approach: smoothly glide straight onto the previous page end
+              if (scrollY <= currPage.end + 140) {
+                window.scrollTo({ top: currPage.end, behavior: "smooth" });
+                triggerHaptic();
+              } else {
+                // Responsive kinetic boost upwards
+                const boosted = Math.max(Math.abs(deltaY) * 2.4, 75);
+                window.scrollBy({ top: -boosted, behavior: "auto" });
+              }
+              return;
+            }
           }
         }
       }
@@ -185,7 +243,6 @@ export default function SmoothScrollDamper() {
       }, 420);
     };
 
-    // Attach wheel listener with passive: false to allow selective damping
     window.addEventListener("wheel", onWheel, { passive: false });
 
     // Touch momentum boundary observer for mobile tactile support
@@ -207,24 +264,32 @@ export default function SmoothScrollDamper() {
       const touchVelocity = Math.abs(touchDelta) / touchDuration;
       const scrollY = window.scrollY;
 
-      // Check if user is scrolling near Page 1 end into Page 2
-      const heroEl = document.getElementById("hero");
-      const langEl = document.getElementById("languages");
-      if (heroEl && langEl) {
-        const heroEnd = Math.max(0, heroEl.offsetHeight - window.innerHeight);
-        const langStart = langEl.offsetTop;
+      const pages = getPages();
+      if (pages.length === 0) return;
 
-        // Assist slow touch drag downwards at the end of Page 1 into Page 2
-        if (scrollY >= heroEnd - 260 && scrollY < langStart && touchDelta > 30) {
-          window.scrollTo({ top: langStart, behavior: "smooth" });
+      // Touch drag assistance across inter-page gaps
+      for (let i = 0; i < pages.length - 1; i++) {
+        const currPage = pages[i];
+        const nextPage = pages[i + 1];
+
+        // Dragging down near end of page into next page
+        if (touchDelta > 30 && scrollY >= currPage.end - 160 && scrollY < nextPage.start) {
+          window.scrollTo({ top: nextPage.start, behavior: "smooth" });
+          triggerHaptic();
+          return;
+        }
+
+        // Dragging up near start of page into previous page
+        if (touchDelta < -30 && scrollY <= nextPage.start + 160 && scrollY > currPage.end) {
+          window.scrollTo({ top: currPage.end, behavior: "smooth" });
           triggerHaptic();
           return;
         }
       }
 
-      // High-velocity mobile flick
+      // High-velocity mobile flick haptics at checkpoints
       if (touchVelocity > 0.8 && Math.abs(touchDelta) > 120) {
-        const checkpoints = getPageCheckpoints();
+        const checkpoints = getPageCheckpoints(pages);
         for (const cp of checkpoints) {
           if (Math.abs(cp.top - scrollY) < 140) {
             triggerHaptic();

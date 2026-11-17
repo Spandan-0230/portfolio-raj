@@ -50,6 +50,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  cursor: url('/cursor.png') 0 0, auto !important;
 }
 
 html {
@@ -58,6 +59,7 @@ html {
   /* Firefox */
   -ms-overflow-style: none;
   /* IE / Edge */
+  cursor: url('/cursor.png') 0 0, auto;
 }
 
 html::-webkit-scrollbar {
@@ -71,8 +73,24 @@ body {
   background-color: #000000;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  cursor: url('/cursor.png') 0 0, auto;
 }
 
 body::-webkit-scrollbar {
   display: none;
+}
+
+/* Ensure interactive elements and all clickable controls also preserve the custom 3D cursor */
+a,
+button,
+[role="button"],
+input,
+select,
+textarea,
+.year-tab,
+.svg-day-rect,
+.language-card,
+.welcome-container,
+.scroll-explore-prompt {
+  cursor: url('/cursor.png') 0 0, pointer !important;
 }

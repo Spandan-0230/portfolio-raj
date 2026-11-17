@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# private assets
+Prvt/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

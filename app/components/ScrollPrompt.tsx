@@ -119,7 +119,7 @@ export default function ScrollPrompt() {
           justify-content: center;
           text-align: center;
           z-index: 35;
-          cursor: pointer;
+          cursor: url('/cursor.png') 0 0, pointer;
           user-select: none;
           opacity: 1;
           visibility: visible;
@@ -189,7 +189,7 @@ export default function ScrollPrompt() {
           align-items: center;
           gap: 12px;
           z-index: 35;
-          cursor: pointer;
+          cursor: url('/cursor.png') 0 0, pointer;
           user-select: none;
           opacity: 1;
           visibility: visible;
