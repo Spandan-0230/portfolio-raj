@@ -80,14 +80,40 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
+  const text1Ref = useRef<HTMLDivElement>(null);
+  const text2Ref = useRef<HTMLDivElement>(null);
+  const text3Ref = useRef<HTMLDivElement>(null);
+
   const targetFrame = useRef<number>(1);
   const currentFrame = useRef<number>(1);
   const lastDrawnFrame = useRef<number>(-1);
 
-  const targetFade = useRef<number>(0);
-  const currentFade = useRef<number>(0);
+  const targetFade = useRef<number>(1);
+  const currentFade = useRef<number>(1);
+  const targetProgress = useRef<number>(0);
+  const currentProgress = useRef<number>(0);
 
   useEffect(() => {
+    // 0. Force scroll to top on every reload or navigation / redirect
+    if (typeof window !== "undefined") {
+      if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+      }
+      const resetTop = () => {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      };
+      resetTop();
+      requestAnimationFrame(resetTop);
+      if (window.location.hash) {
+        history.replaceState(null, "", window.location.pathname);
+      }
+    }
+
+    const onBeforeUnload = () => {
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+
     const canvas = canvasRef.current;
     const overlay = overlayRef.current;
     if (!canvas) return;
@@ -148,7 +174,7 @@ export default function Home() {
     };
     setTimeout(loadRemaining, 60);
 
-    // Scroll calculation with fade-through-black mapping
+    // Scroll calculation with frame & text choreographies
     const onScroll = () => {
       const track = trackRef.current;
       if (!track) return;
@@ -158,21 +184,37 @@ export default function Home() {
 
       const scrolled = window.scrollY;
       const progress = Math.max(0, Math.min(1, scrolled / totalTrackScroll));
+      targetProgress.current = progress;
 
-      // Frames 1..331 play from progress 0.0 to 0.82
-      const FRAME_MAX_PROGRESS = 0.82;
-      const frameProgress = Math.min(1, progress / FRAME_MAX_PROGRESS);
-      targetFrame.current = 1 + frameProgress * (TOTAL_FRAMES - 1);
+      // 1. Black fade transitions:
+      // Start: Screen is black at progress 0, smoothly fades out to clear by progress 0.04 as user scrolls
+      // Main: Screen is crystal clear (progress 0.04 -> 0.78)
+      // End: Fades smoothly through black (progress 0.78 -> 0.95) to transition into portfolio
+      const START_FADE_END = 0.04;
+      const END_FADE_START = 0.78;
+      const END_FADE_END = 0.95;
 
-      // Fade through black starting at 78% progress, reaching pitch black at 95%
-      const FADE_START = 0.78;
-      const FADE_END = 0.95;
-      if (progress <= FADE_START) {
-        targetFade.current = 0;
-      } else if (progress >= FADE_END) {
-        targetFade.current = 1;
+      if (progress < START_FADE_END) {
+        targetFade.current = 1 - progress / START_FADE_END;
+      } else if (progress > END_FADE_START) {
+        targetFade.current = Math.min(1, (progress - END_FADE_START) / (END_FADE_END - END_FADE_START));
       } else {
-        targetFade.current = (progress - FADE_START) / (FADE_END - FADE_START);
+        targetFade.current = 0;
+      }
+
+      // 2. Frame-to-frame scrubbing:
+      // Holds frame 1 while emerging from black (0.00 -> 0.02),
+      // then scrubs seamlessly through frames 1..331 up to 0.82 progress.
+      const FRAME_START_PROGRESS = 0.02;
+      const FRAME_MAX_PROGRESS = 0.82;
+      if (progress <= FRAME_START_PROGRESS) {
+        targetFrame.current = 1;
+      } else {
+        const frameProgress = Math.min(
+          1,
+          (progress - FRAME_START_PROGRESS) / (FRAME_MAX_PROGRESS - FRAME_START_PROGRESS)
+        );
+        targetFrame.current = 1 + frameProgress * (TOTAL_FRAMES - 1);
       }
 
       // Proximity preloading near current target frame
@@ -201,6 +243,7 @@ export default function Home() {
       if (prefersReducedMotion.matches) {
         currentFrame.current = targetFrame.current;
         currentFade.current = targetFade.current;
+        currentProgress.current = targetProgress.current;
       } else {
         // Frame interpolation lerp
         const diffFrame = targetFrame.current - currentFrame.current;
@@ -213,13 +256,103 @@ export default function Home() {
         // Fade interpolation lerp
         const diffFade = targetFade.current - currentFade.current;
         if (Math.abs(diffFade) > 0.001) {
-          currentFade.current += diffFade * 0.1;
+          currentFade.current += diffFade * 0.15;
         } else {
           currentFade.current = targetFade.current;
         }
+
+        // Progress lerp for text choreography
+        const diffProg = targetProgress.current - currentProgress.current;
+        if (Math.abs(diffProg) > 0.0005) {
+          currentProgress.current += diffProg * LERP_FACTOR;
+        } else {
+          currentProgress.current = targetProgress.current;
+        }
       }
 
-      // Update black fade overlay
+      const p = currentProgress.current;
+
+      // Choreograph 3 Hero Sequence Phases:
+      // Phase 1: SPANDAN BOLE (0.00 -> 0.28)
+      let t1Op = 0, t1Tr = 0, t1Bl = 0;
+      if (p <= 0.20) {
+        t1Op = 1;
+        t1Tr = 0;
+        t1Bl = 0;
+      } else if (p < 0.28) {
+        const t = (p - 0.20) / 0.08;
+        t1Op = 1 - t;
+        t1Tr = -t * 26;
+        t1Bl = t * 6;
+      } else {
+        t1Op = 0;
+      }
+
+      if (text1Ref.current) {
+        text1Ref.current.style.opacity = t1Op.toFixed(3);
+        text1Ref.current.style.transform = `translateY(${t1Tr.toFixed(1)}px)`;
+        text1Ref.current.style.filter = `blur(${t1Bl.toFixed(1)}px)`;
+      }
+
+      // Phase 2: SOFTWARE DEVELOPER (0.28 -> 0.55)
+      let t2Op = 0, t2Tr = 0, t2Bl = 0;
+      if (p < 0.28) {
+        t2Op = 0;
+      } else if (p < 0.36) {
+        const t = (p - 0.28) / 0.08;
+        t2Op = t;
+        t2Tr = (1 - t) * 26;
+        t2Bl = (1 - t) * 6;
+      } else if (p <= 0.47) {
+        t2Op = 1;
+        t2Tr = 0;
+        t2Bl = 0;
+      } else if (p < 0.55) {
+        const t = (p - 0.47) / 0.08;
+        t2Op = 1 - t;
+        t2Tr = -t * 26;
+        t2Bl = t * 6;
+      } else {
+        t2Op = 0;
+      }
+
+      if (text2Ref.current) {
+        text2Ref.current.style.opacity = t2Op.toFixed(3);
+        text2Ref.current.style.transform = `translateY(${t2Tr.toFixed(1)}px)`;
+        text2Ref.current.style.filter = `blur(${t2Bl.toFixed(1)}px)`;
+      }
+
+      // Phase 3: AI ENGINEER (0.55 -> 0.78)
+      let t3Op = 0, t3Tr = 0, t3Bl = 0;
+      if (p < 0.55) {
+        t3Op = 0;
+      } else if (p < 0.63) {
+        const t = (p - 0.55) / 0.08;
+        t3Op = t;
+        t3Tr = (1 - t) * 26;
+        t3Bl = (1 - t) * 6;
+      } else if (p <= 0.72) {
+        t3Op = 1;
+        t3Tr = 0;
+        t3Bl = 0;
+      } else if (p < 0.78) {
+        const t = (p - 0.72) / 0.06;
+        t3Op = 1 - t;
+        t3Tr = -t * 26;
+        t3Bl = t * 6;
+      } else {
+        t3Op = 0;
+      }
+
+      if (text3Ref.current) {
+        text3Ref.current.style.opacity = t3Op.toFixed(3);
+        text3Ref.current.style.transform = `translateY(${t3Tr.toFixed(1)}px)`;
+        text3Ref.current.style.filter = `blur(${t3Bl.toFixed(1)}px)`;
+      }
+
+
+
+      // Update black fade overlay directly from currentFade
       if (overlay) {
         overlay.style.opacity = currentFade.current.toFixed(4);
       }
@@ -241,6 +374,7 @@ export default function Home() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
+      window.removeEventListener("beforeunload", onBeforeUnload);
     };
   }, []);
 
@@ -289,6 +423,188 @@ export default function Home() {
             }}
           />
 
+          {/* =========================================================================
+              HERO TEXT 1: SPANDAN BOLE (Phase 1 - Initial Landing)
+              ========================================================================= */}
+          <div
+            ref={text1Ref}
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "0 24px",
+              zIndex: 15,
+              opacity: 1,
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          >
+            {/* Name with S·H·A·G·A Octagonal Chamfered Alphabet Design */}
+            <h1
+              style={{
+                margin: 0,
+                fontFamily: "'HeroAlphabet', 'HeroOrbitron', sans-serif",
+                fontSize: "clamp(2.8rem, 7.5vw, 7.2rem)",
+                fontWeight: 800,
+                letterSpacing: "0.14em",
+                lineHeight: 1.08,
+                textTransform: "uppercase",
+                backgroundImage:
+                  "linear-gradient(180deg, #ffffff 0%, #e2e8f0 68%, #94a3b8 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                color: "transparent",
+                filter: "drop-shadow(0 0 25px rgba(255, 255, 255, 0.28))",
+              }}
+            >
+              <span style={{ display: "block" }}>SPANDAN B</span>
+
+            </h1>
+
+            {/* Subtitle / Capabilities */}
+            <p
+              style={{
+                marginTop: "24px",
+                maxWidth: "680px",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                fontSize: "clamp(10px, 1.1vw, 13px)",
+                letterSpacing: "0.28em",
+                textTransform: "uppercase",
+                color: "rgba(255, 255, 255, 0.45)",
+                lineHeight: 1.6,
+              }}
+            >
+              Creative Engineering · Systems & Intelligence
+            </p>
+          </div>
+
+          {/* =========================================================================
+              HERO TEXT 2: SOFTWARE DEVELOPER (Phase 2 - After Further Scroll)
+              ========================================================================= */}
+          <div
+            ref={text2Ref}
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "0 24px",
+              zIndex: 15,
+              opacity: 0,
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          >
+            {/* Title: SOFTWARE DEVELOPER with S·H·A·G·A Octagonal Alphabet & Cyan Accent */}
+            <h1
+              style={{
+                margin: 0,
+                fontFamily: "'HeroAlphabet', 'HeroOrbitron', sans-serif",
+                fontSize: "clamp(2.5rem, 6.8vw, 6.6rem)",
+                fontWeight: 800,
+                letterSpacing: "0.14em",
+                lineHeight: 1.08,
+                textTransform: "uppercase",
+                backgroundImage:
+                  "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #D2F0F7 60%, #7FE0F4 84%, #42C8E8 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                color: "transparent",
+                filter:
+                  "drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 10px rgba(56, 189, 248, 0.18))",
+              }}
+            >
+              <br></br>
+              <span style={{ display: "block" }}>SOFTWARE DEV</span>
+            </h1>
+
+            {/* Subtitle / Capabilities */}
+            <p
+              style={{
+                marginTop: "24px",
+                maxWidth: "680px",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                fontSize: "clamp(10px, 1.1vw, 13px)",
+                letterSpacing: "0.28em",
+                textTransform: "uppercase",
+                color: "rgba(255, 255, 255, 0.45)",
+                lineHeight: 1.6,
+              }}
+            >
+              Scalable Architecture · Distributed Systems · High Performance
+            </p>
+          </div>
+
+          {/* =========================================================================
+              HERO TEXT 3: AI ENGINEER (Phase 3 - Deep Sequence)
+              ========================================================================= */}
+          <div
+            ref={text3Ref}
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "0 24px",
+              zIndex: 15,
+              opacity: 0,
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          >
+            {/* Title: AI ENGINEER with S·H·A·G·A Octagonal Alphabet & Cyan Accent */}
+            <h1
+              style={{
+                margin: 0,
+                fontFamily: "'HeroAlphabet', 'HeroOrbitron', sans-serif",
+                fontSize: "clamp(2.8rem, 7.6vw, 7.4rem)",
+                fontWeight: 800,
+                letterSpacing: "0.14em",
+                lineHeight: 1.08,
+                textTransform: "uppercase",
+                backgroundImage:
+                  "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #D2F0F7 60%, #7FE0F4 84%, #42C8E8 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                color: "transparent",
+                filter:
+                  "drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 10px rgba(56, 189, 248, 0.18))",
+              }}
+            >
+              <br></br>
+              <span style={{ display: "block" }}>AI ENGINEER</span>
+            </h1>
+
+            {/* Subtitle / Capabilities */}
+            <p
+              style={{
+                marginTop: "24px",
+                maxWidth: "680px",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                fontSize: "clamp(10px, 1.1vw, 13px)",
+                letterSpacing: "0.28em",
+                textTransform: "uppercase",
+                color: "rgba(255, 255, 255, 0.45)",
+                lineHeight: 1.6,
+              }}
+            >
+              Neural Architectures · Autonomous Agents · Generative Models
+            </p>
+          </div>
+
           {/* Fade-Through-Black Overlay */}
           <div
             ref={overlayRef}
@@ -296,222 +612,13 @@ export default function Home() {
               position: "absolute",
               inset: 0,
               backgroundColor: "#000000",
-              opacity: 0,
+              opacity: 1,
               pointerEvents: "none",
+              zIndex: 25,
             }}
           />
         </div>
       </div>
-
-      {/* New Page / Portfolio Content Below */}
-      <section
-        id="content"
-        style={{
-          position: "relative",
-          width: "100%",
-          minHeight: "100vh",
-          backgroundColor: "#000000",
-          color: "#ffffff",
-          zIndex: 10,
-          boxSizing: "border-box",
-          padding: "120px 24px 160px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {/* Subtle Ambient Radial Glow */}
-        <div
-          style={{
-            position: "absolute",
-            top: "20%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "600px",
-            height: "600px",
-            background:
-              "radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0) 70%)",
-            pointerEvents: "none",
-            borderRadius: "50%",
-          }}
-        />
-
-        <div
-          style={{
-            maxWidth: "960px",
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-            gap: "32px",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {/* Minimalist Pill Badge */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "6px 16px",
-              borderRadius: "9999px",
-              border: "1px solid rgba(255, 255, 255, 0.15)",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
-              backdropFilter: "blur(12px)",
-              fontSize: "11px",
-              fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-              letterSpacing: "0.25em",
-              textTransform: "uppercase",
-              color: "#a1a1aa",
-            }}
-          >
-            <span
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                backgroundColor: "#ffffff",
-                boxShadow: "0 0 8px rgba(255, 255, 255, 0.8)",
-              }}
-            />
-            Portfolio // 2026
-          </div>
-
-          {/* Cinematic Title */}
-          <h1
-            style={{
-              fontSize: "clamp(36px, 6vw, 68px)",
-              fontWeight: 700,
-              letterSpacing: "-0.03em",
-              lineHeight: 1.1,
-              margin: 0,
-              background: "linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.6) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Engineering Intuition Through Motion
-          </h1>
-
-          {/* Minimal Subtitle */}
-          <p
-            style={{
-              fontSize: "clamp(16px, 2vw, 20px)",
-              color: "#a1a1aa",
-              maxWidth: "640px",
-              lineHeight: 1.6,
-              margin: 0,
-              fontWeight: 300,
-            }}
-          >
-            Crafting high-fidelity interactive digital experiences, real-time graphics, and
-            ultra-responsive web architectures.
-          </p>
-
-          {/* Minimalist Cards Showcase */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: "20px",
-              width: "100%",
-              marginTop: "48px",
-              textAlign: "left",
-            }}
-          >
-            <div
-              style={{
-                padding: "28px",
-                borderRadius: "16px",
-                backgroundColor: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-                transition: "border-color 0.3s ease",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                  color: "#71717a",
-                  letterSpacing: "0.2em",
-                }}
-              >
-                01 // INTERACTION
-              </span>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "#ffffff" }}>
-                Fluid Motion Design
-              </h3>
-              <p style={{ fontSize: "13px", color: "#a1a1aa", lineHeight: 1.5, margin: 0 }}>
-                Scroll-driven visual narratives, canvas acceleration, and sub-pixel interpolations.
-              </p>
-            </div>
-
-            <div
-              style={{
-                padding: "28px",
-                borderRadius: "16px",
-                backgroundColor: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                  color: "#71717a",
-                  letterSpacing: "0.2em",
-                }}
-              >
-                02 // ARCHITECTURE
-              </span>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "#ffffff" }}>
-                Next-Gen Performance
-              </h3>
-              <p style={{ fontSize: "13px", color: "#a1a1aa", lineHeight: 1.5, margin: 0 }}>
-                Optimized frame caching, zero layout shifts, and high-DPR multi-threaded rendering.
-              </p>
-            </div>
-
-            <div
-              style={{
-                padding: "28px",
-                borderRadius: "16px",
-                backgroundColor: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                  color: "#71717a",
-                  letterSpacing: "0.2em",
-                }}
-              >
-                03 // CRAFTSMANSHIP
-              </span>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "#ffffff" }}>
-                Bespoke Experiences
-              </h3>
-              <p style={{ fontSize: "13px", color: "#a1a1aa", lineHeight: 1.5, margin: 0 }}>
-                Every interaction tailored with surgical precision, mathematical curves, and elegance.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
