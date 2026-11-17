@@ -20,6 +20,12 @@ export interface UserProfile {
   email?: string;
 }
 
+export interface YearContributionData {
+  year: number;
+  total: number;
+  contributions: ContributionDay[];
+}
+
 const DEFAULT_PROFILE: UserProfile = {
   username: "Spandan-0230",
   name: "Spandan Bole",
@@ -33,19 +39,33 @@ const DEFAULT_PROFILE: UserProfile = {
 };
 
 export default function GithubActivity() {
+  const currentCalendarYear = new Date().getFullYear();
+
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [contributions, setContributions] = useState<ContributionDay[]>([]);
-  const [totalCount, setTotalCount] = useState<number>(83);
-  const [isVisible, setIsVisible] = useState(false);
+  const [totalCount, setTotalCount] = useState<number>(84);
+
+  // Year-wise dynamic states
+  const [years, setYears] = useState<number[]>([currentCalendarYear]);
+  const [selectedYear, setSelectedYear] = useState<number>(currentCalendarYear);
+  const [yearData, setYearData] = useState<Record<number, YearContributionData>>({});
+
   const [hoveredDay, setHoveredDay] = useState<{
     day: ContributionDay;
     x: number;
     y: number;
   } | null>(null);
 
-  const sectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  const ambientGlowRef = useRef<HTMLDivElement>(null);
 
-  // Active Real-Time Fetching Engine: background polling + immediate sync on focus/visibility
+  const targetProgress = useRef(0);
+  const currentProgress = useRef(0);
+
+  // 1. Active Real-Time Fetching Engine: background polling + immediate sync on focus/visibility
   useEffect(() => {
     let isMounted = true;
 
@@ -64,22 +84,34 @@ export default function GithubActivity() {
             ...data.profile,
           }));
         }
+
+        if (Array.isArray(data?.years) && data.years.length > 0) {
+          setYears(data.years);
+          setSelectedYear((prev) =>
+            data.years.includes(prev) ? prev : data.years[data.years.length - 1]
+          );
+        }
+
+        if (data?.yearData && typeof data.yearData === "object") {
+          setYearData(data.yearData);
+        }
+
         if (Array.isArray(data?.contributions) && data.contributions.length > 0) {
           setContributions(data.contributions);
-          setTotalCount(data.total ?? 83);
+          setTotalCount(data.total ?? 84);
         }
       } catch {
         // Keep current state on transient network blip
       }
     };
 
-    // 1. Initial immediate live fetch
+    // Initial immediate live fetch
     fetchLiveContributions();
 
-    // 2. Active background sync polling (every 30 seconds)
+    // Active background sync polling (every 30 seconds)
     const intervalId = setInterval(fetchLiveContributions, 30000);
 
-    // 3. Instant sync whenever user returns to tab / focuses window
+    // Instant sync whenever user returns to tab / focuses window
     const handleSync = () => {
       if (document.visibilityState === "visible") {
         fetchLiveContributions();
@@ -89,31 +121,153 @@ export default function GithubActivity() {
     window.addEventListener("focus", handleSync);
     document.addEventListener("visibilitychange", handleSync);
 
-    // Scroll reveal observer
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.15 }
-    );
-
-    const sectionEl = sectionRef.current;
-    if (sectionEl) {
-      observer.observe(sectionEl);
-    }
-
     return () => {
       isMounted = false;
       clearInterval(intervalId);
       window.removeEventListener("focus", handleSync);
       document.removeEventListener("visibilitychange", handleSync);
-      if (sectionEl) {
-        observer.unobserve(sectionEl);
-      }
     };
   }, []);
+
+  // 2. Cinematic Scroll Animation Engine: Smooth RAF Lerp & Scroll-Driven Choreography
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const onScroll = () => {
+      const track = trackRef.current;
+      if (!track) return;
+
+      const rect = track.getBoundingClientRect();
+      const totalScrollable = track.offsetHeight - window.innerHeight;
+      if (totalScrollable <= 0) {
+        targetProgress.current = 1;
+        return;
+      }
+
+      // Scrub progress 0..1 across the pinned scroll track
+      const scrolledInTrack = -rect.top;
+      const progress = Math.max(0, Math.min(1, scrolledInTrack / totalScrollable));
+      targetProgress.current = progress;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    onScroll();
+
+    let rafId: number;
+    const LERP_FACTOR = 0.09;
+
+    const loop = () => {
+      if (prefersReducedMotion.matches) {
+        currentProgress.current = 1;
+      } else {
+        const diff = targetProgress.current - currentProgress.current;
+        if (Math.abs(diff) > 0.0004) {
+          currentProgress.current += diff * LERP_FACTOR;
+        } else {
+          currentProgress.current = targetProgress.current;
+        }
+      }
+
+      const p = currentProgress.current;
+      const diffVelocity = targetProgress.current - currentProgress.current;
+
+      // 1. Header Choreography (emerges smoothly from 0.02 to 0.32)
+      if (headerRef.current) {
+        let hOp = 0, hTr = 35, hBl = 8;
+        if (p <= 0.02) {
+          hOp = 0;
+          hTr = 35;
+          hBl = 8;
+        } else if (p < 0.32) {
+          const t = (p - 0.02) / 0.30;
+          hOp = t;
+          hTr = (1 - t) * 35;
+          hBl = (1 - t) * 8;
+        } else {
+          hOp = 1;
+          hTr = 0;
+          hBl = 0;
+        }
+        headerRef.current.style.opacity = hOp.toFixed(3);
+        headerRef.current.style.transform = `translateY(${hTr.toFixed(1)}px)`;
+        headerRef.current.style.filter = `blur(${hBl.toFixed(1)}px)`;
+      }
+
+      // 2. Ambient Backlight Glow (0.01 to 0.35)
+      if (ambientGlowRef.current) {
+        const glowOp = Math.min(1, Math.max(0, (p - 0.01) / 0.35));
+        ambientGlowRef.current.style.opacity = glowOp.toFixed(3);
+      }
+
+      // 3. Unified Card Choreography (0.12 to 0.58)
+      if (cardRef.current) {
+        let cOp = 0, cTr = 55, cScale = 0.88, cBl = 10;
+        if (p <= 0.12) {
+          cOp = 0;
+          cTr = 55;
+          cScale = 0.88;
+          cBl = 10;
+        } else if (p < 0.58) {
+          const raw = (p - 0.12) / 0.46;
+          const eased = 1 - Math.pow(1 - raw, 3);
+          cOp = raw;
+          cTr = (1 - eased) * 55;
+          cScale = 0.88 + eased * 0.12;
+          cBl = (1 - raw) * 10;
+        } else {
+          cOp = 1;
+          cTr = 0;
+          cScale = 1;
+          cBl = 0;
+        }
+
+        const floatingInertia = diffVelocity * 28;
+        const finalTr = cTr + floatingInertia;
+
+        cardRef.current.style.opacity = cOp.toFixed(3);
+        cardRef.current.style.transform = `translateY(${finalTr.toFixed(1)}px) scale(${cScale.toFixed(3)})`;
+        cardRef.current.style.filter = `blur(${cBl.toFixed(1)}px)`;
+      }
+
+      // 4. Sub-footer Choreography (0.35 to 0.75)
+      if (footerRef.current) {
+        let fOp = 0, fTr = 20;
+        if (p <= 0.35) {
+          fOp = 0;
+          fTr = 20;
+        } else if (p < 0.75) {
+          const t = (p - 0.35) / 0.40;
+          fOp = t;
+          fTr = (1 - t) * 20;
+        } else {
+          fOp = 1;
+          fTr = 0;
+        }
+        footerRef.current.style.opacity = fOp.toFixed(3);
+        footerRef.current.style.transform = `translateY(${fTr.toFixed(1)}px)`;
+      }
+
+      rafId = requestAnimationFrame(loop);
+    };
+
+    rafId = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  // Compute active year's data
+  const activeYearData = yearData[selectedYear];
+  const activeTotal =
+    typeof activeYearData?.total === "number" ? activeYearData.total : totalCount;
+  const activeContributions =
+    activeYearData?.contributions && activeYearData.contributions.length > 0
+      ? activeYearData.contributions
+      : contributions;
 
   // SVG grid metrics for 100% fluid vector scaling with ZERO horizontal scroll
   const SQUARE_SIZE = 11;
@@ -122,9 +276,9 @@ export default function GithubActivity() {
   const LABEL_WIDTH = 30;
   const ROW_START = 20;
 
-  // Group days into 53 weeks (7 rows each: Sun=0 to Sat=6)
+  // Group active contributions into 53 weeks (7 rows each: Sun=0 to Sat=6)
   const { weeks, monthLabels } = useMemo(() => {
-    if (!contributions.length) {
+    if (!activeContributions.length) {
       return { weeks: [], monthLabels: [] };
     }
 
@@ -132,13 +286,13 @@ export default function GithubActivity() {
     let currentWeek: (ContributionDay | null)[] = [];
 
     // Pad leading days of the first week
-    const firstDate = new Date(contributions[0].date);
+    const firstDate = new Date(activeContributions[0].date);
     const startDayOfWeek = firstDate.getUTCDay(); // 0 = Sunday
     for (let i = 0; i < startDayOfWeek; i++) {
       currentWeek.push(null);
     }
 
-    contributions.forEach((day) => {
+    activeContributions.forEach((day) => {
       currentWeek.push(day);
       if (currentWeek.length === 7) {
         weeksArr.push(currentWeek);
@@ -187,7 +341,7 @@ export default function GithubActivity() {
     });
 
     return { weeks: weeksArr, monthLabels: months };
-  }, [contributions, PITCH, LABEL_WIDTH]);
+  }, [activeContributions, PITCH, LABEL_WIDTH]);
 
   // Color mapper for GitHub activity levels
   const getLevelColor = (level: number, count: number) => {
@@ -214,85 +368,115 @@ export default function GithubActivity() {
 
   return (
     <section
-      ref={sectionRef}
+      ref={trackRef}
       id="activity"
       style={{
         position: "relative",
         width: "100%",
-        minHeight: "80vh",
+        height: "200vh", // Scrubbing distance matching LanguageShowcase
         backgroundColor: "#000000",
         color: "#ffffff",
         zIndex: 20,
         boxSizing: "border-box",
-        padding: "100px 24px 120px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
-        borderTop: "1px solid rgba(255, 255, 255, 0.08)",
       }}
     >
+      {/* Pinned Sticky Stage - Full Viewport Presentation */}
       <div
-        className={`activity-wrapper ${isVisible ? "content-revealed" : ""}`}
+        className="sticky-stage"
         style={{
-          maxWidth: "1160px",
+          position: "sticky",
+          top: 0,
+          left: 0,
           width: "100%",
+          height: "100vh",
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          gap: "28px",
-          position: "relative",
-          zIndex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 24px",
+          boxSizing: "border-box",
         }}
       >
-        {/* =========================================================================
-            1. SECTION HEADER (Above the Card, Left-Aligned)
-            ========================================================================= */}
-        <div className="section-header">
-          <h2 className="main-title">Activity graph</h2>
-          <p className="subtitle-text">The Developer's Journey</p>
-        </div>
+        {/* Subtle Ambient Radial Backlight */}
+        <div
+          ref={ambientGlowRef}
+          className="ambient-glow"
+          style={{
+            position: "absolute",
+            top: "28%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "900px",
+            height: "450px",
+            background:
+              "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(57, 211, 83, 0.08) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(0, 0, 0, 0) 70%)",
+            pointerEvents: "none",
+            borderRadius: "50%",
+            opacity: 0,
+          }}
+        />
 
-        {/* =========================================================================
-            2. UNIFIED OBSIDIAN ACTIVITY CARD
-            ========================================================================= */}
-        <div className="unified-card">
-          {/* Subtle perimeter border beam on card hover */}
-          <div className="card-border-beam" />
+        <div
+          className="activity-wrapper"
+          style={{
+            maxWidth: "1160px",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "28px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {/* =========================================================================
+              1. SECTION HEADER (Fully Centered with Hero Typography)
+              ========================================================================= */}
+          <div ref={headerRef} className="section-header">
+            <h2 className="main-title">Activity Graph</h2>
+            <p className="subtitle-text">The Developer's Journey</p>
+          </div>
 
-          <div className="card-inner">
-            {/* -------------------------------------------------------------
-                LEFT COLUMN: Profile & Bio & Actions
-                ------------------------------------------------------------- */}
-            <div className="card-left-column">
-              <div className="profile-identity">
-                <div className="avatar-container">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={profile.avatarUrl}
-                    alt={profile.name}
-                    width={64}
-                    height={64}
-                    className="avatar-image"
-                  />
-                  <div className="avatar-status-dot" title="Live Synced with GitHub">
-                    <span className="pulse-inner-dot" />
+          {/* =========================================================================
+              2. UNIFIED OBSIDIAN ACTIVITY CARD
+              ========================================================================= */}
+          <div ref={cardRef} className="unified-card">
+            {/* Subtle perimeter border beam on card hover */}
+            <div className="card-border-beam" />
+
+            <div className="card-inner">
+              {/* -------------------------------------------------------------
+                  LEFT COLUMN: Profile & Bio & Actions
+                  ------------------------------------------------------------- */}
+              <div className="card-left-column">
+                {/* Centered Profile Hero: Picture, Username & Handle ONLY */}
+                <div className="profile-hero-center">
+                  <div className="avatar-container">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={profile.avatarUrl}
+                      alt={profile.name}
+                      width={68}
+                      height={68}
+                      className="avatar-image"
+                    />
+                  </div>
+
+                  <div className="identity-text">
+                    <h3 className="user-name">{profile.name}</h3>
+                    <a
+                      href={`https://github.com/${profile.username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="user-handle"
+                    >
+                      @{profile.username}
+                    </a>
                   </div>
                 </div>
 
-                <div className="identity-text">
-                  <h3 className="user-name">{profile.name}</h3>
-                  <a
-                    href={`https://github.com/${profile.username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="user-handle"
-                  >
-                    @{profile.username}
-                  </a>
-                </div>
-
-                {/* Live Synced Contact & Joined Metadata */}
+                {/* Live Synced Contact & Joined Metadata (Kept as it is) */}
                 <div className="profile-meta-list">
                   <a
                     href={`mailto:${profile.email || "spandanbole777@gmail.com"}`}
@@ -336,192 +520,210 @@ export default function GithubActivity() {
                     <span className="meta-text">{profile.joinedDate || "Joined last month"}</span>
                   </div>
                 </div>
+
+                {/* 3 Quick Stat Columns (Kept as it is) */}
+                <div className="stats-row">
+                  <div className="stat-col">
+                    <span className="stat-num">{totalCount}</span>
+                    <span className="stat-label">Commits</span>
+                  </div>
+                  <div className="stat-col">
+                    <span className="stat-num">{profile.publicRepos}</span>
+                    <span className="stat-label">Repos</span>
+                  </div>
+                  <div className="stat-col">
+                    <span className="stat-num">{profile.followers}</span>
+                    <span className="stat-label">Followers</span>
+                  </div>
+                </div>
+
+                {/* High-Contrast Luminous GitHub Profile Button (Kept as it is) */}
+                <a
+                  href={`https://github.com/${profile.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-btn"
+                >
+                  <span>GitHub profile</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M7 17L17 7M17 7H7M17 7V17" />
+                  </svg>
+                </a>
               </div>
-              {/* 3 Quick Stat Columns */}
-              <div className="stats-row">
-                <div className="stat-col">
-                  <span className="stat-num">{totalCount}</span>
-                  <span className="stat-label">Commits</span>
-                </div>
-                <div className="stat-col">
-                  <span className="stat-num">{profile.publicRepos}</span>
-                  <span className="stat-label">Repos</span>
-                </div>
-                <div className="stat-col">
-                  <span className="stat-num">{profile.followers}</span>
-                  <span className="stat-label">Followers</span>
-                </div>
-              </div>
 
-              {/* High-Contrast GitHub Profile Button */}
-              <a
-                href={`https://github.com/${profile.username}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="profile-btn"
-              >
-                <span>GitHub profile</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M7 17L17 7M17 7H7M17 7V17" />
-                </svg>
-              </a>
-            </div>
+              {/* -------------------------------------------------------------
+                  RIGHT COLUMN: Overview + Big Counter + Fluid Heatmap
+                  ------------------------------------------------------------- */}
+              <div className="card-right-column">
+                {/* Header inside Right Column */}
+                <div className="right-top-bar">
+                  <div className="overview-tag">
+                    <span className="overview-title">Contribution overview</span>
+                    <span className="live-status">
+                      <span className="status-dot-mini" />
+                      <span>Live GitHub synced</span>
+                    </span>
+                  </div>
 
-            {/* -------------------------------------------------------------
-                RIGHT COLUMN: Overview + Big Counter + Fluid Heatmap
-                ------------------------------------------------------------- */}
-            <div className="card-right-column">
-              {/* Header inside Right Column */}
-              <div className="right-top-bar">
-                <div className="overview-tag">
-                  <span className="overview-title">Contribution overview</span>
-                  <span className="live-status">
-                    <span className="status-dot-mini" />
-                    <span>Live GitHub synced</span>
-                  </span>
+                  {/* Horizontal Year Tabs in Increasing Order Left-to-Right (up to last 5 years) */}
+                  <div className="year-tabs-container">
+                    {years.map((yr) => (
+                      <button
+                        key={yr}
+                        type="button"
+                        onClick={() => setSelectedYear(yr)}
+                        className={`year-tab ${selectedYear === yr ? "active" : ""}`}
+                        title={`View ${yr} contributions`}
+                      >
+                        {yr}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Dropdown Pill */}
-                <div className="period-pill">
-                  <span>Past 365 days</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M6 9l6 6 6-6" />
+                {/* Big Metric Display for Active Year */}
+                <div className="metric-display-row">
+                  <span className="giant-metric">{activeTotal}</span>
+                  <div className="metric-caption">
+                    <span className="caption-bold">total contributions</span>
+                    <span className="caption-sub">
+                      {selectedYear === currentCalendarYear
+                        ? "in the trailing 52 weeks"
+                        : `in ${selectedYear}`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Subtle Horizontal Divider */}
+                <div className="inner-divider" />
+
+                {/* Fluid Vector SVG Heatmap (Zero Scrollbar, Fully Responsive) */}
+                <div className="calendar-svg-wrap">
+                  <svg
+                    viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
+                    className="activity-svg"
+                    preserveAspectRatio="xMinYMid meet"
+                  >
+                    {/* Month Labels */}
+                    {monthLabels.map((m, idx) => (
+                      <text
+                        key={idx}
+                        x={m.x}
+                        y={12}
+                        className="svg-month-label"
+                      >
+                        {m.label}
+                      </text>
+                    ))}
+
+                    {/* Weekday Labels (Mon, Wed, Fri) */}
+                    <text
+                      x={LABEL_WIDTH - 8}
+                      y={ROW_START + 1 * PITCH + 9}
+                      textAnchor="end"
+                      className="svg-weekday-label"
+                    >
+                      Mon
+                    </text>
+                    <text
+                      x={LABEL_WIDTH - 8}
+                      y={ROW_START + 3 * PITCH + 9}
+                      textAnchor="end"
+                      className="svg-weekday-label"
+                    >
+                      Wed
+                    </text>
+                    <text
+                      x={LABEL_WIDTH - 8}
+                      y={ROW_START + 5 * PITCH + 9}
+                      textAnchor="end"
+                      className="svg-weekday-label"
+                    >
+                      Fri
+                    </text>
+
+                    {/* 53 Columns of Activity Blocks */}
+                    {weeks.map((week, wIdx) => {
+                      const colX = LABEL_WIDTH + wIdx * PITCH;
+                      return (
+                        <g key={wIdx}>
+                          {week.map((day, dIdx) => {
+                            if (!day) return null;
+
+                            const rowY = ROW_START + dIdx * PITCH;
+                            const fill = getLevelColor(day.level, day.count);
+                            const isHigh = day.level === 4;
+
+                            return (
+                              <rect
+                                key={day.date}
+                                x={colX}
+                                y={rowY}
+                                width={SQUARE_SIZE}
+                                height={SQUARE_SIZE}
+                                rx={2.2}
+                                ry={2.2}
+                                fill={fill}
+                                stroke={isHigh ? "#39d353" : "rgba(255, 255, 255, 0.06)"}
+                                strokeWidth={isHigh ? "1.2" : "1"}
+                                className="svg-day-rect"
+                                onMouseEnter={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setHoveredDay({
+                                    day,
+                                    x: rect.left + rect.width / 2,
+                                    y: rect.top,
+                                  });
+                                }}
+                                onMouseLeave={() => setHoveredDay(null)}
+                              />
+                            );
+                          })}
+                        </g>
+                      );
+                    })}
                   </svg>
                 </div>
-              </div>
 
-              {/* Big Metric Display */}
-              <div className="metric-display-row">
-                <span className="giant-metric">{totalCount}</span>
-                <div className="metric-caption">
-                  <span className="caption-bold">total contributions</span>
-                  <span className="caption-sub">in the trailing 52 weeks</span>
-                </div>
-              </div>
+                {/* Bottom Legend Bar inside Right Column */}
+                <div className="right-bottom-bar">
+                  <div className="bottom-left-stat">
+                    <span className="dot-indicator" />
+                    <span>
+                      {activeTotal} total contributions in{" "}
+                      {selectedYear === currentCalendarYear
+                        ? "the trailing 52 weeks"
+                        : selectedYear}
+                    </span>
+                  </div>
 
-              {/* Subtle Horizontal Divider */}
-              <div className="inner-divider" />
-
-              {/* Fluid Vector SVG Heatmap (Zero Scrollbar, Fully Responsive) */}
-              <div className="calendar-svg-wrap">
-                <svg
-                  viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-                  className="activity-svg"
-                  preserveAspectRatio="xMinYMid meet"
-                >
-                  {/* Month Labels */}
-                  {monthLabels.map((m, idx) => (
-                    <text
-                      key={idx}
-                      x={m.x}
-                      y={12}
-                      className="svg-month-label"
-                    >
-                      {m.label}
-                    </text>
-                  ))}
-
-                  {/* Weekday Labels (Mon, Wed, Fri) */}
-                  <text
-                    x={LABEL_WIDTH - 8}
-                    y={ROW_START + 1 * PITCH + 9}
-                    textAnchor="end"
-                    className="svg-weekday-label"
-                  >
-                    Mon
-                  </text>
-                  <text
-                    x={LABEL_WIDTH - 8}
-                    y={ROW_START + 3 * PITCH + 9}
-                    textAnchor="end"
-                    className="svg-weekday-label"
-                  >
-                    Wed
-                  </text>
-                  <text
-                    x={LABEL_WIDTH - 8}
-                    y={ROW_START + 5 * PITCH + 9}
-                    textAnchor="end"
-                    className="svg-weekday-label"
-                  >
-                    Fri
-                  </text>
-
-                  {/* 53 Columns of Activity Blocks */}
-                  {weeks.map((week, wIdx) => {
-                    const colX = LABEL_WIDTH + wIdx * PITCH;
-                    return (
-                      <g key={wIdx}>
-                        {week.map((day, dIdx) => {
-                          if (!day) return null;
-
-                          const rowY = ROW_START + dIdx * PITCH;
-                          const fill = getLevelColor(day.level, day.count);
-                          const isHigh = day.level === 4;
-
-                          return (
-                            <rect
-                              key={day.date}
-                              x={colX}
-                              y={rowY}
-                              width={SQUARE_SIZE}
-                              height={SQUARE_SIZE}
-                              rx={2.2}
-                              ry={2.2}
-                              fill={fill}
-                              stroke={isHigh ? "#39d353" : "rgba(255, 255, 255, 0.06)"}
-                              strokeWidth={isHigh ? "1.2" : "1"}
-                              className="svg-day-rect"
-                              onMouseEnter={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setHoveredDay({
-                                  day,
-                                  x: rect.left + rect.width / 2,
-                                  y: rect.top,
-                                });
-                              }}
-                              onMouseLeave={() => setHoveredDay(null)}
-                            />
-                          );
-                        })}
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-
-              {/* Bottom Legend Bar inside Right Column */}
-              <div className="right-bottom-bar">
-                <div className="bottom-left-stat">
-                  <span className="dot-indicator" />
-                  <span>{totalCount} total contributions in the trailing 52 weeks</span>
-                </div>
-
-                <div className="legend-group">
-                  <span className="legend-tag">Less</span>
-                  <div className="legend-square" style={{ backgroundColor: "#161720" }} />
-                  <div className="legend-square" style={{ backgroundColor: "#0e4429" }} />
-                  <div className="legend-square" style={{ backgroundColor: "#006d32" }} />
-                  <div className="legend-square" style={{ backgroundColor: "#26a641" }} />
-                  <div
-                    className="legend-square"
-                    style={{
-                      backgroundColor: "#39d353",
-                      boxShadow: "0 0 6px rgba(57, 211, 83, 0.5)",
-                    }}
-                  />
-                  <span className="legend-tag">More</span>
+                  <div className="legend-group">
+                    <span className="legend-tag">Less</span>
+                    <div className="legend-square" style={{ backgroundColor: "#161720" }} />
+                    <div className="legend-square" style={{ backgroundColor: "#0e4429" }} />
+                    <div className="legend-square" style={{ backgroundColor: "#006d32" }} />
+                    <div className="legend-square" style={{ backgroundColor: "#26a641" }} />
+                    <div
+                      className="legend-square"
+                      style={{
+                        backgroundColor: "#39d353",
+                        boxShadow: "0 0 6px rgba(57, 211, 83, 0.5)",
+                      }}
+                    />
+                    <span className="legend-tag">More</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* =========================================================================
-            3. SUB-FOOTER (Below the Card)
-            ========================================================================= */}
-        <div className="section-footer">
-          <span className="footer-quote">Small commits. Meaningful progress.</span>
+          {/* =========================================================================
+              3. SUB-FOOTER (Below the Card)
+              ========================================================================= */}
+          <div ref={footerRef} className="section-footer">
+            <span className="footer-quote">A little progress, every day.</span>
+            <span className="footer-caption">Contribution history · {selectedYear}</span>
+          </div>
         </div>
       </div>
 
@@ -549,67 +751,48 @@ export default function GithubActivity() {
         </div>
       )}
 
-      {/* Styled JSX matching the user reference image 100% */}
+      {/* Styled JSX matching user design */}
       <style jsx>{`
-        /* Scroll Entrance Animations */
-        .ambient-glow {
-          opacity: 0;
-          transition: opacity 1.2s ease-out;
-        }
-        .glow-revealed {
-          opacity: 1;
-        }
-
-        .activity-wrapper {
-          opacity: 0;
-          transform: translateY(28px);
-          filter: blur(6px);
-          transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-            transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-            filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .content-revealed {
-          opacity: 1;
-          transform: translateY(0);
-          filter: blur(0px);
-        }
-
         /* -----------------------------------------------------------------
-           SECTION HEADER
+           SECTION HEADER (Centered)
            ----------------------------------------------------------------- */
         .section-header {
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
-          text-align: left;
-          gap: 6px;
-        }
-
-        .eyebrow-text {
-          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-          font-size: 11px;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: rgba(255, 255, 255, 0.45);
-          font-weight: 600;
+          align-items: center;
+          text-align: center;
+          gap: 8px;
+          width: 100%;
+          opacity: 0;
+          transform: translateY(35px);
+          filter: blur(8px);
+          will-change: transform, opacity, filter;
         }
 
         .main-title {
           margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          font-size: clamp(2.4rem, 4.5vw, 4.2rem);
-          font-weight: 700;
-          letter-spacing: -0.02em;
-          color: #ffffff;
-          line-height: 1.08;
+          font-family: 'HeroAlphabet', 'HeroOrbitron', sans-serif;
+          font-size: clamp(2rem, 3.8vw, 3.5rem);
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          line-height: 1.12;
+          text-transform: uppercase;
+          text-align: center;
+          background-image: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 40%, #E2E8F0 75%, #94A3B8 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.9));
         }
 
         .subtitle-text {
-          margin: 2px 0 0;
+          margin: 0;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           font-size: 14.5px;
           color: rgba(255, 255, 255, 0.5);
-          letter-spacing: 0.01em;
+          letter-spacing: 0.02em;
+          text-align: center;
         }
 
         /* -----------------------------------------------------------------
@@ -623,6 +806,12 @@ export default function GithubActivity() {
           background: rgba(255, 255, 255, 0.08);
           box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.85);
           transition: box-shadow 0.3s ease;
+          width: 100%;
+          box-sizing: border-box;
+          opacity: 0;
+          transform: translateY(55px) scale(0.88);
+          filter: blur(10px);
+          will-change: transform, opacity, filter;
         }
         .unified-card:hover {
           box-shadow: 0 26px 60px -8px rgba(0, 0, 0, 0.95),
@@ -691,70 +880,48 @@ export default function GithubActivity() {
           gap: 20px;
         }
 
-        .profile-identity {
+        /* Centered Hero Profile Section */
+        .profile-hero-center {
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
-          text-align: left;
+          align-items: center;
+          text-align: center;
           gap: 12px;
+          width: 100%;
         }
 
         .avatar-container {
           position: relative;
-          width: 64px;
-          height: 64px;
-        }
-
-        .avatar-image {
-          width: 64px;
-          height: 64px;
-          border-radius: 18px;
-          object-fit: cover;
-          display: block;
-          border: 1.5px solid rgba(255, 255, 255, 0.15);
-          box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.8);
-          background-color: #121318;
-        }
-
-        .avatar-status-dot {
-          position: absolute;
-          bottom: -2px;
-          right: -2px;
-          width: 17px;
-          height: 17px;
-          border-radius: 50%;
-          background-color: #07080b;
+          width: 68px;
+          height: 68px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 2px solid #07080b;
         }
 
-        .pulse-inner-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: #39d353;
-          box-shadow: 0 0 6px #39d353;
-          animation: pulse-avatar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .avatar-image {
+          width: 68px;
+          height: 68px;
+          border-radius: 20px;
+          object-fit: cover;
+          display: block;
+          border: 1.5px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.85);
+          background-color: #121318;
+          transition: transform 0.25s ease, border-color 0.25s ease;
         }
-
-        @keyframes pulse-avatar {
-          0%,
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.45;
-            transform: scale(0.85);
-          }
+        .avatar-image:hover {
+          transform: scale(1.05);
+          border-color: rgba(255, 255, 255, 0.4);
         }
 
         .identity-text {
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          align-items: center;
+          text-align: center;
+          gap: 3px;
+          width: 100%;
         }
 
         .user-name {
@@ -764,6 +931,7 @@ export default function GithubActivity() {
           font-weight: 700;
           color: #ffffff;
           letter-spacing: -0.01em;
+          text-align: center;
         }
 
         .user-handle {
@@ -772,6 +940,7 @@ export default function GithubActivity() {
           color: rgba(255, 255, 255, 0.45);
           text-decoration: none;
           transition: color 0.2s ease;
+          text-align: center;
         }
         .user-handle:hover {
           color: #38bdf8;
@@ -782,8 +951,8 @@ export default function GithubActivity() {
           display: flex;
           flex-direction: column;
           gap: 8px;
-          margin-top: 4px;
           width: 100%;
+          padding: 2px 4px;
         }
 
         .meta-row {
@@ -818,16 +987,6 @@ export default function GithubActivity() {
           letter-spacing: -0.01em;
         }
 
-        .user-bio {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 12.5px;
-          color: rgba(255, 255, 255, 0.55);
-          line-height: 1.4;
-        }
-
         .stats-row {
           display: flex;
           align-items: center;
@@ -856,7 +1015,7 @@ export default function GithubActivity() {
           color: rgba(255, 255, 255, 0.45);
         }
 
-        /* Luminous Glowing GitHub Profile Button */
+        /* Refined Luminous GitHub Profile Button */
         .profile-btn {
           width: 100%;
           display: flex;
@@ -871,7 +1030,7 @@ export default function GithubActivity() {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           font-size: 13px;
           font-weight: 700;
-          box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
           transition: background-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
             box-shadow 0.25s ease;
           position: relative;
@@ -879,9 +1038,9 @@ export default function GithubActivity() {
         .profile-btn:hover {
           background-color: #ffffff;
           transform: translateY(-2px);
-          box-shadow: 0 0 22px rgba(255, 255, 255, 0.7),
-            0 0 42px rgba(255, 255, 255, 0.35),
-            0 8px 24px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 0 12px rgba(255, 255, 255, 0.3),
+            0 0 22px rgba(255, 255, 255, 0.12),
+            0 6px 18px rgba(0, 0, 0, 0.45);
         }
         .profile-btn svg {
           transition: transform 0.2s ease;
@@ -907,6 +1066,7 @@ export default function GithubActivity() {
           align-items: center;
           justify-content: space-between;
           width: 100%;
+          gap: 12px;
         }
 
         .overview-tag {
@@ -956,19 +1116,42 @@ export default function GithubActivity() {
           }
         }
 
-        .period-pill {
+        /* Horizontal Year Tabs Container in Increasing Order */
+        .year-tabs-container {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 6px 12px;
-          border-radius: 9px;
-          background-color: #121318;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.85);
+          gap: 6px;
+          background-color: #0e1015;
+          padding: 3px 4px;
+          border-radius: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+        }
+
+        .year-tab {
+          padding: 6px 14px;
+          border-radius: 8px;
+          background: transparent;
+          border: 1px solid transparent;
+          color: rgba(255, 255, 255, 0.55);
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           font-size: 12px;
+          font-weight: 600;
           cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           user-select: none;
+          line-height: 1;
+        }
+
+        .year-tab:hover {
+          color: #ffffff;
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .year-tab.active {
+          background-color: #ffffff;
+          color: #000000;
+          font-weight: 700;
+          box-shadow: 0 2px 10px rgba(255, 255, 255, 0.25);
         }
 
         .metric-display-row {
@@ -1112,6 +1295,9 @@ export default function GithubActivity() {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           font-size: 12.5px;
           color: rgba(255, 255, 255, 0.45);
+          opacity: 0;
+          transform: translateY(20px);
+          will-change: transform, opacity;
         }
 
         /* -----------------------------------------------------------------
@@ -1140,8 +1326,9 @@ export default function GithubActivity() {
 
           .section-footer {
             flex-direction: column !important;
-            align-items: flex-start !important;
+            align-items: center !important;
             gap: 6px !important;
+            text-align: center;
           }
         }
 

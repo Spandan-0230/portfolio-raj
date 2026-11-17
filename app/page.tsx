@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import LanguageShowcase from "./components/LanguageShowcase";
 import GithubActivity from "./components/GithubActivity";
+import SmoothScrollDamper from "./components/SmoothScrollDamper";
+import ScrollPrompt from "./components/ScrollPrompt";
 
 const TOTAL_FRAMES = 331;
 const LERP_FACTOR = 0.085;
@@ -191,10 +193,10 @@ export default function Home() {
       // 1. Black fade transitions:
       // Start: Screen is black at progress 0, smoothly fades out to clear by progress 0.04 as user scrolls
       // Main: Screen is crystal clear (progress 0.04 -> 0.78)
-      // End: Fades smoothly through black (progress 0.78 -> 0.95) to transition into portfolio
+      // End: Fades smoothly through black (progress 0.78 -> 0.88) to transition seamlessly into page 2
       const START_FADE_END = 0.04;
       const END_FADE_START = 0.78;
-      const END_FADE_END = 0.95;
+      const END_FADE_END = 0.88;
 
       if (progress < START_FADE_END) {
         targetFade.current = 1 - progress / START_FADE_END;
@@ -275,24 +277,25 @@ export default function Home() {
       const p = currentProgress.current;
 
       // Choreograph 3 Hero Sequence Phases:
-      // Phase 1: SPANDAN BOLE (0.00 -> 0.28)
-      // Fade in smoothly as scene emerges from black (0.01 -> 0.05), hold until 0.20, then fade & blur out to 0.28
+      // Phase 1: SPANDAN BOLE (Delayed with a clean gap after "Welcome" clears: 0.06 -> 0.28)
+      // Gap: 0.00 -> 0.06 (Allows "Welcome" to dissolve completely into clear scene)
+      // Fade in smoothly: 0.06 -> 0.11, hold until 0.22, then fade & blur out to 0.28
       let t1Op = 0, t1Tr = 0, t1Bl = 0;
-      if (p < 0.01) {
+      if (p < 0.06) {
         t1Op = 0;
         t1Tr = 18;
         t1Bl = 5;
-      } else if (p < 0.05) {
-        const t = (p - 0.01) / 0.04;
+      } else if (p < 0.11) {
+        const t = (p - 0.06) / 0.05;
         t1Op = t;
         t1Tr = (1 - t) * 18;
         t1Bl = (1 - t) * 5;
-      } else if (p <= 0.20) {
+      } else if (p <= 0.22) {
         t1Op = 1;
         t1Tr = 0;
         t1Bl = 0;
       } else if (p < 0.28) {
-        const t = (p - 0.20) / 0.08;
+        const t = (p - 0.22) / 0.06;
         t1Op = 1 - t;
         t1Tr = -t * 26;
         t1Bl = t * 6;
@@ -405,6 +408,7 @@ export default function Home() {
       {/* Scroll Animation Canvas Track */}
       <div
         ref={trackRef}
+        id="hero"
         style={{
           position: "relative",
           width: "100%",
@@ -630,6 +634,9 @@ export default function Home() {
               zIndex: 25,
             }}
           />
+
+          {/* Scroll To Explore Prompt (Prominently displayed at the very start, smoothly removed on scroll) */}
+          <ScrollPrompt />
         </div>
       </div>
 
@@ -638,6 +645,9 @@ export default function Home() {
 
       {/* GitHub Contribution Activity Section */}
       <GithubActivity />
+
+      {/* Smooth Page-Wise Scroll Damper with Haptic Feedback */}
+      <SmoothScrollDamper />
     </div>
   );
 }

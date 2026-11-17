@@ -24,15 +24,26 @@ export interface UserProfile {
   email?: string;
 }
 
+export interface YearContributionData {
+  year: number;
+  total: number;
+  contributions: ContributionDay[];
+}
+
+export interface ContributionsApiResponse {
+  profile: UserProfile;
+  years: number[];
+  selectedYear: number;
+  yearData: Record<number, YearContributionData>;
+  total: number;
+  contributions: ContributionDay[];
+  syncedAt: string;
+}
+
 // In-memory hot cache to prevent GitHub IP rate-limiting while providing near-instant freshness
 interface CachedState {
   timestamp: number;
-  data: {
-    profile: UserProfile;
-    total: number;
-    contributions: ContributionDay[];
-    syncedAt: string;
-  };
+  data: ContributionsApiResponse;
 }
 
 let memoryCache: CachedState | null = null;
@@ -60,6 +71,7 @@ function formatJoinedDate(createdAtStr?: string): string {
 export async function GET() {
   const username = "Spandan-0230";
   const now = Date.now();
+  const currentYear = new Date().getFullYear();
 
   // Return fresh in-memory snapshot if fetched within the last 15 seconds
   if (memoryCache && now - memoryCache.timestamp < CACHE_TTL_MS) {
@@ -85,7 +97,7 @@ export async function GET() {
     username: "Spandan-0230",
     name: "Spandan Bole",
     avatarUrl: "https://avatars.githubusercontent.com/u/347005203?v=4",
-    bio: "Student · Software Developer · AI Engineer",
+    bio: "Student · Software Developer\nAI Engineer",
     publicRepos: 7,
     followers: 3,
     following: 2,
@@ -119,14 +131,18 @@ export async function GET() {
     console.error("Live GitHub user profile fetch error:", err);
   }
 
-  let contributions: ContributionDay[] = memoryCache?.data.contributions ?? [];
-  let total = memoryCache?.data.total ?? 83;
+  let years: number[] = memoryCache?.data.years ?? [currentYear];
+  let yearData: Record<number, YearContributionData> =
+    memoryCache?.data.yearData ?? {};
+  let contributions: ContributionDay[] =
+    memoryCache?.data.contributions ?? [];
+  let total = memoryCache?.data.total ?? 84;
   let fetchedContributions = false;
 
-  // 2. Primary: Live structured contributions API with no-store
+  // 2. Primary: Live structured contributions API for ALL years with no-store
   try {
     const res = await fetch(
-      `https://github-contributions-api.jogruber.de/v4/${username}?y=last`,
+      `https://github-contributions-api.jogruber.de/v4/${username}?y=all`,
       {
         cache: "no-store",
         headers: { "User-Agent": "Portfolio-App" },
@@ -135,10 +151,59 @@ export async function GET() {
 
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data?.contributions) && data.contributions.length > 0) {
-        total = data.total?.lastYear ?? data.total?.["2026"] ?? total;
-        contributions = data.contributions as ContributionDay[];
-        fetchedContributions = true;
+      if (data?.total && typeof data.total === "object") {
+        // Extract all distinct 4-digit years from GitHub response
+        let foundYears = Object.keys(data.total)
+          .filter((k) => /^\d{4}$/.test(k))
+          .map(Number)
+          .sort((a, b) => a - b); // Ascending / increasing order from left to right
+
+        // If total didn't contain years, check contributions dates
+        if (foundYears.length === 0 && Array.isArray(data.contributions)) {
+          const ySet = new Set<number>();
+          data.contributions.forEach((d: { date?: string }) => {
+            if (d.date) {
+              const y = parseInt(d.date.substring(0, 4), 10);
+              if (!isNaN(y)) ySet.add(y);
+            }
+          });
+          foundYears = Array.from(ySet).sort((a, b) => a - b);
+        }
+
+        if (foundYears.length > 0) {
+          // "always provide just last 5 years of data (if exist) in increasing order from left to right"
+          const last5Years = foundYears.slice(-5);
+
+          const groupedYearData: Record<number, YearContributionData> = {};
+          const allContribs: ContributionDay[] = Array.isArray(data.contributions)
+            ? data.contributions
+            : [];
+
+          last5Years.forEach((yr) => {
+            const yrContribs = allContribs.filter(
+              (d) => d.date && d.date.startsWith(`${yr}-`)
+            );
+            let yrTotal = data.total[String(yr)];
+            if (typeof yrTotal !== "number") {
+              yrTotal = yrContribs.reduce(
+                (sum: number, d: ContributionDay) => sum + (d.count || 0),
+                0
+              );
+            }
+            groupedYearData[yr] = {
+              year: yr,
+              total: yrTotal,
+              contributions: yrContribs,
+            };
+          });
+
+          const latestYear = last5Years[last5Years.length - 1];
+          years = last5Years;
+          yearData = groupedYearData;
+          total = groupedYearData[latestYear]?.total ?? 84;
+          contributions = groupedYearData[latestYear]?.contributions ?? [];
+          fetchedContributions = true;
+        }
       }
     }
   } catch (err) {
@@ -176,8 +241,16 @@ export async function GET() {
         }
 
         if (parsed.length > 0) {
-          contributions = parsed;
+          years = [currentYear];
           total = sum > 0 ? sum : total;
+          contributions = parsed;
+          yearData = {
+            [currentYear]: {
+              year: currentYear,
+              total,
+              contributions: parsed,
+            },
+          };
           fetchedContributions = true;
         }
       }
@@ -200,10 +273,22 @@ export async function GET() {
       });
     }
     contributions = fallbackDays;
+    years = [currentYear];
+    total = 84;
+    yearData = {
+      [currentYear]: {
+        year: currentYear,
+        total: 84,
+        contributions: fallbackDays,
+      },
+    };
   }
 
-  const payload = {
+  const payload: ContributionsApiResponse = {
     profile,
+    years,
+    selectedYear: years[years.length - 1],
+    yearData,
     total,
     contributions,
     syncedAt: new Date().toISOString(),

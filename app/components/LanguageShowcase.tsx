@@ -308,18 +308,18 @@ export default function LanguageShowcase() {
       const p = currentProgress.current;
       const diffVelocity = targetProgress.current - currentProgress.current;
 
-      // 1. Title Choreography (emerges smoothly from 0.02 to 0.32)
+      // 1. Title Choreography (emerges immediately from 0.00 to 0.20)
       if (titleRef.current) {
-        let tOp = 0, tTr = 35, tBl = 8;
-        if (p <= 0.02) {
+        let tOp = 0, tTr = 25, tBl = 6;
+        if (p <= 0) {
           tOp = 0;
-          tTr = 35;
-          tBl = 8;
-        } else if (p < 0.32) {
-          const t = (p - 0.02) / 0.30;
+          tTr = 25;
+          tBl = 6;
+        } else if (p < 0.20) {
+          const t = p / 0.20;
           tOp = t;
-          tTr = (1 - t) * 35;
-          tBl = (1 - t) * 8;
+          tTr = (1 - t) * 25;
+          tBl = (1 - t) * 6;
         } else {
           tOp = 1;
           tTr = 0;
@@ -332,7 +332,7 @@ export default function LanguageShowcase() {
 
       // 2. Ambient Backlight Glow
       if (ambientGlowRef.current) {
-        const glowOp = Math.min(1, Math.max(0, (p - 0.01) / 0.35));
+        const glowOp = Math.min(1, Math.max(0, p / 0.22));
         ambientGlowRef.current.style.opacity = glowOp.toFixed(3);
       }
 

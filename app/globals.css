@@ -54,12 +54,15 @@
 
 html {
   background-color: #000000;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE / Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE / Edge */
 }
 
 html::-webkit-scrollbar {
-  display: none; /* Chrome / Safari / Edge */
+  display: none;
+  /* Chrome / Safari / Edge */
 }
 
 body {
