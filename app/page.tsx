@@ -469,17 +469,16 @@ export default function Home() {
             {/* Subtitle / Capabilities */}
             <p
               style={{
-                marginTop: "24px",
+                marginTop: "0px",
                 maxWidth: "680px",
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                fontSize: "clamp(10px, 1.1vw, 13px)",
+                fontSize: "clamp(10px, 1.1vw, 30px)",
                 letterSpacing: "0.28em",
-                textTransform: "uppercase",
                 color: "rgba(255, 255, 255, 0.45)",
                 lineHeight: 1.6,
               }}
             >
-              Creative Engineering · Systems & Intelligence
+              STUDENT | BACHELOR OF COMPUTER SCIENCE
             </p>
           </div>
 
@@ -530,17 +529,17 @@ export default function Home() {
             {/* Subtitle / Capabilities */}
             <p
               style={{
-                marginTop: "24px",
+                marginTop: "0px",
                 maxWidth: "680px",
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                fontSize: "clamp(10px, 1.1vw, 13px)",
+                fontSize: "clamp(10px, 1.1vw, 30px)",
                 letterSpacing: "0.28em",
                 textTransform: "uppercase",
                 color: "rgba(255, 255, 255, 0.45)",
                 lineHeight: 1.6,
               }}
             >
-              Scalable Architecture · Distributed Systems · High Performance
+              Website | Windows | Android  · AI Inspired Full Stack
             </p>
           </div>
 
@@ -591,17 +590,17 @@ export default function Home() {
             {/* Subtitle / Capabilities */}
             <p
               style={{
-                marginTop: "24px",
+                marginTop: "0px",
                 maxWidth: "680px",
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                fontSize: "clamp(10px, 1.1vw, 13px)",
+                fontSize: "clamp(10px, 1.1vw, 30px)",
                 letterSpacing: "0.28em",
                 textTransform: "uppercase",
                 color: "rgba(255, 255, 255, 0.45)",
                 lineHeight: 1.6,
               }}
             >
-              Neural Architectures · Autonomous Agents · Generative Models
+              AI Tools | Integration | Loop Engineering
             </p>
           </div>
 
