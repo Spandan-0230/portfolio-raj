@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import LanguageShowcase from "./components/LanguageShowcase";
+import GithubActivity from "./components/GithubActivity";
 
 const TOTAL_FRAMES = 331;
 const LERP_FACTOR = 0.085;
@@ -634,6 +635,9 @@ export default function Home() {
 
       {/* Languages Showcase Section */}
       <LanguageShowcase />
+
+      {/* GitHub Contribution Activity Section */}
+      <GithubActivity />
     </div>
   );
 }
