@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import LanguageShowcase from "./components/LanguageShowcase";
 
 const TOTAL_FRAMES = 331;
 const LERP_FACTOR = 0.085;
@@ -274,8 +275,18 @@ export default function Home() {
 
       // Choreograph 3 Hero Sequence Phases:
       // Phase 1: SPANDAN BOLE (0.00 -> 0.28)
+      // Fade in smoothly as scene emerges from black (0.01 -> 0.05), hold until 0.20, then fade & blur out to 0.28
       let t1Op = 0, t1Tr = 0, t1Bl = 0;
-      if (p <= 0.20) {
+      if (p < 0.01) {
+        t1Op = 0;
+        t1Tr = 18;
+        t1Bl = 5;
+      } else if (p < 0.05) {
+        const t = (p - 0.01) / 0.04;
+        t1Op = t;
+        t1Tr = (1 - t) * 18;
+        t1Bl = (1 - t) * 5;
+      } else if (p <= 0.20) {
         t1Op = 1;
         t1Tr = 0;
         t1Bl = 0;
@@ -295,6 +306,7 @@ export default function Home() {
       }
 
       // Phase 2: SOFTWARE DEVELOPER (0.28 -> 0.55)
+      // Smooth fade-in + drift up (0.28 -> 0.36), hold until 0.47, fade-out (0.47 -> 0.55)
       let t2Op = 0, t2Tr = 0, t2Bl = 0;
       if (p < 0.28) {
         t2Op = 0;
@@ -323,6 +335,7 @@ export default function Home() {
       }
 
       // Phase 3: AI ENGINEER (0.55 -> 0.78)
+      // Smooth fade-in + drift up (0.55 -> 0.63), hold until 0.72, fade-out (0.72 -> 0.78)
       let t3Op = 0, t3Tr = 0, t3Bl = 0;
       if (p < 0.55) {
         t3Op = 0;
@@ -438,7 +451,7 @@ export default function Home() {
               textAlign: "center",
               padding: "0 24px",
               zIndex: 15,
-              opacity: 1,
+              opacity: 0,
               pointerEvents: "none",
               userSelect: "none",
             }}
@@ -530,16 +543,16 @@ export default function Home() {
             <p
               style={{
                 marginTop: "0px",
-                maxWidth: "680px",
+                maxWidth: "780px",
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                 fontSize: "clamp(10px, 1.1vw, 30px)",
-                letterSpacing: "0.28em",
+                letterSpacing: "0.25em",
                 textTransform: "uppercase",
                 color: "rgba(255, 255, 255, 0.45)",
                 lineHeight: 1.6,
               }}
             >
-              Website | Windows | Android  · AI Inspired Full Stack
+              Website | Windows | Android  · AI Incite Full-Stack Integration
             </p>
           </div>
 
@@ -600,7 +613,7 @@ export default function Home() {
                 lineHeight: 1.6,
               }}
             >
-              AI Tools | Integration | Loop Engineering
+              AI Tools | Loop Engineering | Prompt Engineering
             </p>
           </div>
 
@@ -618,6 +631,9 @@ export default function Home() {
           />
         </div>
       </div>
+
+      {/* Languages Showcase Section */}
+      <LanguageShowcase />
     </div>
   );
 }
