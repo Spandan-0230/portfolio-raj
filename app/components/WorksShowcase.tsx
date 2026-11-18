@@ -172,7 +172,7 @@ export default function WorksShowcase() {
             width: "min(960px, 85vw)",
             height: "55vh",
             background:
-              "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0, 0, 0, 1) 0%, rgba(63, 63, 63, 0.3) 50%, transparent 75%)",
+              "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0, 0, 0, 1) 0%, rgba(61, 61, 61, 0.07) 50%, transparent 75%)",
             pointerEvents: "none",
             zIndex: 1,
           }}

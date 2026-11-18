@@ -306,7 +306,7 @@ export default function Header() {
         }
 
         /* -------------------------------------------------------------
-           RIGHT: White "Contact Us" (Stationary, zero glow)
+           RIGHT: "Contact Us" Outlined Box (White fill on hover only)
            ------------------------------------------------------------- */
         .header-right {
           display: flex;
@@ -318,26 +318,28 @@ export default function Header() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          height: 38px;
-          padding: 0 20px;
-          border-radius: 9px;
-          background-color: #ffffff;
-          color: #000000;
-          border: 1px solid #ffffff;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.02em;
+          height: 34px;
+          padding: 0 16px;
+          border-radius: 2px;
+          background-color: transparent;
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.65);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          font-size: clamp(12px, 1.05vw, 14px);
+          font-weight: 500;
+          letter-spacing: 0.06em;
           text-decoration: none;
           cursor: url('/cursor.png') 0 0, pointer !important;
           box-shadow: none;
-          transition: background-color 0.2s ease, opacity 0.2s ease;
+          transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
           user-select: none;
           pointer-events: auto;
         }
 
         .contact-btn:hover {
-          background-color: #ededed;
+          background-color: #ffffff;
+          color: #000000;
+          border-color: #ffffff;
           transform: none;
           box-shadow: none;
         }
@@ -374,9 +376,9 @@ export default function Header() {
           }
 
           .contact-btn {
-            height: 32px;
+            height: 30px;
             padding: 0 12px;
-            font-size: 11.5px;
+            font-size: 12px;
           }
         }
       `}</style>
