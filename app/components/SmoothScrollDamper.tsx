@@ -65,6 +65,14 @@ export default function SmoothScrollDamper() {
         pages.push({ id: "works", name: "Works", start, end });
       }
 
+      // Page 4: Stage Four Showcase
+      const stage4El = document.getElementById("stage4");
+      if (stage4El) {
+        const start = stage4El.offsetTop;
+        const end = start + Math.max(0, stage4El.offsetHeight - winH);
+        pages.push({ id: "stage4", name: "Stage 4", start, end });
+      }
+
       return pages;
     };
 

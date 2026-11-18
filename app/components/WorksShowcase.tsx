@@ -64,9 +64,11 @@ export default function WorksShowcase() {
           cOp = 0.9 + 0.1 * t;
           cTr = (1 - t) * 14;
           cScale = 0.98 + 0.02 * t;
-        }
-        // Terminal Section: Remains gracefully settled and visible
-        else {
+        } else if (p > 0.80) {
+          const exit = Math.min(1, Math.max(0, (p - 0.80) / 0.16));
+          cOp = Math.max(0, 1 - exit);
+          cTr = -exit * 30;
+        } else {
           cTr = (p - 0.5) * -12;
         }
 

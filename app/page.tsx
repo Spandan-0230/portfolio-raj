@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import GithubActivity from "./components/GithubActivity";
 import WorksShowcase from "./components/WorksShowcase";
+import StageFour from "./components/StageFour";
 import SmoothScrollDamper from "./components/SmoothScrollDamper";
 import ScrollPrompt from "./components/ScrollPrompt";
 import SideMargins from "./components/SideMargins";
@@ -642,6 +643,9 @@ export default function Home() {
 
       {/* Page 3: My Works Showcase Section */}
       <WorksShowcase />
+
+      {/* Page 4: Cinematic Ambient Stage (Blank Page 3 background) */}
+      <StageFour />
 
       {/* Smooth Page-Wise Scroll Damper with Haptic Feedback */}
       <SmoothScrollDamper />
