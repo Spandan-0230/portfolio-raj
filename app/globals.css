@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Outfit:wght@800;900&family=Pirata+One&family=Playfair+Display:ital,wght@1,500;1,600;1,700&display=swap');
+
 @font-face {
   font-family: 'HeroAlphabet';
   src: url('/fonts/Oxanium-ExtraBold.ttf') format('truetype');
@@ -42,6 +44,46 @@
   font-family: 'HeroAnton';
   src: url('/fonts/Anton-Regular.ttf') format('truetype');
   font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HeroPoppins';
+  src: url('/fonts/Poppins-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HeroArchivo';
+  src: url('/fonts/ArchivoBlack-Regular.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'WorksOutfit';
+  src: url('/fonts/Outfit-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BrandPirata';
+  src: url('/fonts/PirataOne-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BrandCinzel';
+  src: url('/fonts/CinzelDecorative-Bold.ttf') format('truetype');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }

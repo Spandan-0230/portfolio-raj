@@ -36,7 +36,7 @@ export default function SmoothScrollDamper() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Helper: Discover exact real-time page boundaries for all 4 pages
+    // Helper: Discover exact real-time page boundaries for all 3 pages
     const getPages = (): PageInfo[] => {
       const winH = window.innerHeight;
       const pages: PageInfo[] = [];
@@ -57,20 +57,12 @@ export default function SmoothScrollDamper() {
         pages.push({ id: "activity", name: "Activity", start, end });
       }
 
-      // Page 3: Hammer 3D
-      const hammerEl = document.getElementById("hammer");
-      if (hammerEl) {
-        const start = hammerEl.offsetTop;
-        const end = start + Math.max(0, hammerEl.offsetHeight - winH);
-        pages.push({ id: "hammer", name: "Hammer", start, end });
-      }
-
-      // Page 4: Languages Showcase
-      const langEl = document.getElementById("languages");
-      if (langEl) {
-        const start = langEl.offsetTop;
-        const end = start + Math.max(0, langEl.offsetHeight - winH);
-        pages.push({ id: "languages", name: "Languages", start, end });
+      // Page 3: Works Showcase
+      const worksEl = document.getElementById("works");
+      if (worksEl) {
+        const start = worksEl.offsetTop;
+        const end = start + Math.max(0, worksEl.offsetHeight - winH);
+        pages.push({ id: "works", name: "Works", start, end });
       }
 
       return pages;

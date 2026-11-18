@@ -5,6 +5,23 @@ import { useEffect, useRef } from "react";
 const TOTAL_FRAMES = 289;
 const LERP_FACTOR = 0.085;
 
+// ============================================================================
+// LIGHTING & AMBIENCE ADJUSTMENT CONTROLS
+// Adjust these parameters to fine-tune the spotlight intensity, spread, and darkness
+// ============================================================================
+export const HAMMER_LIGHTING_CONFIG = {
+  // Vignette / Background darkness outside the spotlight (0 = no darkness, 1 = pitch black)
+  outerDarkness: 1,
+  // Darkness inside the center spotlight (0 = completely untouched bright natural canvas, 0.2 = subtly dimmed)
+  centerDarkness: 0,
+  // Center spotlight radius (percentage of viewport diagonal: e.g. "32%", "40%", "50%")
+  spotlightRadius: "38%",
+  // Falloff / transition softness from bright center to dark outer (percentage: e.g. "72%", "85%")
+  falloffRadius: "90%",
+  // Ambient radial glow boost in the middle to enhance natural illumination (0 = disabled, 0.25 = subtle soft ambient)
+  centerGlowIntensity: 0,
+};
+
 // Persistent frame cache (outside component lifecycle)
 const frameCache: (HTMLImageElement | null)[] = new Array(TOTAL_FRAMES + 1).fill(null);
 const frameLoaded: boolean[] = new Array(TOTAL_FRAMES + 1).fill(false);
@@ -59,7 +76,6 @@ export default function HammerShowcase() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLDivElement>(null);
 
   const targetProgress = useRef(0);
   const currentProgress = useRef(0);
@@ -243,40 +259,6 @@ export default function HammerShowcase() {
         overlayRef.current.style.opacity = currentFade.current.toFixed(4);
       }
 
-      // Title Scroll-Driven Entrance & Exit Choreography
-      if (titleRef.current) {
-        const p = currentProgress.current;
-        let tOp = 1;
-        let tTr = 0;
-        let tBl = 0;
-
-        // Entrance Transition: 0.00 -> 0.06 (emerges smoothly from black & drifts into place)
-        if (p < 0.06) {
-          const t = Math.max(0, p / 0.06);
-          tOp = t;
-          tTr = (1 - t) * 22; // Drifts downward into resting position
-          tBl = (1 - t) * 6;  // Dissolves from blur
-        }
-        // Main Animation Track: 0.06 -> 0.85 (pristine, 100% visible, subtle floating inertia during scroll)
-        else if (p <= 0.85) {
-          tOp = 1;
-          const diffVelocity = targetProgress.current - currentProgress.current;
-          tTr = diffVelocity * 16;
-          tBl = 0;
-        }
-        // Exit Transition: 0.85 -> 0.96 (smoothly drifts upward and dissolves into black)
-        else {
-          const t = Math.min(1, Math.max(0, (p - 0.85) / 0.11));
-          tOp = 1 - t;
-          tTr = -t * 22; // Drifts upward
-          tBl = t * 6;   // Dissolves into blur
-        }
-
-        titleRef.current.style.opacity = tOp.toFixed(3);
-        titleRef.current.style.transform = `translateX(-50%) translateY(${tTr.toFixed(1)}px)`;
-        titleRef.current.style.filter = `blur(${tBl.toFixed(1)}px)`;
-      }
-
       // Redraw canvas frame
       const rounded = Math.round(currentFrame.current);
       if (rounded !== lastDrawnFrame.current || frameLoaded[rounded]) {
@@ -335,69 +317,35 @@ export default function HammerShowcase() {
           }}
         />
 
-        {/* Section Title: Enterprise Showcase (Persistent throughout animation with start/end transitions) */}
+        {/* Dynamic Dark Vignette Overlay with Bright Spotlight Center */}
         <div
-          ref={titleRef}
           style={{
             position: "absolute",
-            top: "clamp(24px, 4.5vh, 48px)",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 20,
-            width: "100%",
-            maxWidth: "1100px",
-            padding: "0 24px",
-            boxSizing: "border-box",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
+            inset: 0,
             pointerEvents: "none",
-            userSelect: "none",
-            opacity: 0,
-            willChange: "transform, opacity, filter",
+            zIndex: 10,
+            background: `radial-gradient(circle at 50% 52%, rgba(0, 0, 0, ${HAMMER_LIGHTING_CONFIG.centerDarkness}) 0%, rgba(0, 0, 0, ${HAMMER_LIGHTING_CONFIG.centerDarkness}) ${HAMMER_LIGHTING_CONFIG.spotlightRadius}, rgba(0, 0, 0, ${HAMMER_LIGHTING_CONFIG.outerDarkness * 0.7}) ${HAMMER_LIGHTING_CONFIG.falloffRadius}, rgba(0, 0, 0, ${HAMMER_LIGHTING_CONFIG.outerDarkness}) 100%)`,
           }}
-        >
-          <h2
+        />
+
+        {/* Ambient Center Lighting Soft Bloom (Configurable) */}
+        {HAMMER_LIGHTING_CONFIG.centerGlowIntensity > 0 && (
+          <div
             style={{
-              margin: 0,
-              fontFamily: "'HeroAlphabet', 'HeroOrbitron', sans-serif",
-              fontSize: "clamp(2rem, 4.4vw, 3.8rem)",
-              fontWeight: 800,
-              letterSpacing: "0.14em",
-              lineHeight: 1.12,
-              textTransform: "uppercase",
-              textAlign: "center",
-              backgroundImage:
-                "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #D2F0F7 60%, #7FE0F4 84%, #42C8E8 100%)",
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              color: "transparent",
-              filter:
-                "drop-shadow(0 2px 8px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(56, 189, 248, 0.28))",
+              position: "absolute",
+              top: "52%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "min(680px, 80vw)",
+              height: "min(680px, 80vh)",
+              borderRadius: "50%",
+              pointerEvents: "none",
+              zIndex: 11,
+              background: `radial-gradient(circle, rgba(186, 230, 253, ${HAMMER_LIGHTING_CONFIG.centerGlowIntensity * 0.35}) 0%, rgba(56, 189, 248, ${HAMMER_LIGHTING_CONFIG.centerGlowIntensity * 0.15}) 40%, transparent 70%)`,
+              mixBlendMode: "screen",
             }}
-          >
-            Ventures
-          </h2>
-          <p
-            style={{
-              marginTop: "4px",
-              maxWidth: "880px",
-              fontFamily:
-                "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
-              fontSize: "clamp(10.5px, 1.15vw, 15.5px)",
-              fontWeight: 600,
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              color: "#CBD5E1",
-              lineHeight: 1.6,
-              textAlign: "center",
-            }}
-          >
-            Crafting Modern Experiences
-          </p>
-        </div>
+          />
+        )}
 
         {/* Fade-Through-Black Overlay */}
         <div

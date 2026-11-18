@@ -174,33 +174,30 @@ export default function GithubActivity() {
 
       // 1. Header Choreography (Fluid entrance, subtle parallax drift, graceful exit)
       if (headerRef.current) {
-        let hOp = 1, hTr = 0, hBl = 0;
-        if (p < 0.20) {
-          const t = Math.max(0, p / 0.20);
-          const eased = 1 - Math.pow(1 - t, 3);
-          hOp = 0.5 + 0.5 * eased;
-          hTr = (1 - eased) * 28;
-          hBl = (1 - eased) * 4;
+        let hOp = 1, hTr = 0;
+        if (p < 0.08) {
+          const t = Math.max(0, p / 0.08);
+          hOp = 0.9 + 0.1 * t;
+          hTr = (1 - t) * 12;
         } else if (p > 0.78) {
           const exit = Math.min(1, Math.max(0, (p - 0.78) / 0.18));
           hOp = Math.max(0, 1 - exit);
           hTr = -exit * 28;
-          hBl = exit * 6;
         } else {
           // Subtle organic parallax drift during main scroll
           hTr = (p - 0.49) * -10;
         }
         headerRef.current.style.opacity = hOp.toFixed(3);
         headerRef.current.style.transform = `translateY(${hTr.toFixed(1)}px)`;
-        headerRef.current.style.filter = `blur(${hBl.toFixed(1)}px)`;
+        headerRef.current.style.filter = "none";
       }
 
       // 2. Ambient Backlight Glow
       if (ambientGlowRef.current) {
         let glowOp = 1;
-        if (p < 0.22) {
-          const t = Math.max(0, p / 0.22);
-          glowOp = 0.3 + 0.7 * t;
+        if (p < 0.08) {
+          const t = Math.max(0, p / 0.08);
+          glowOp = 0.7 + 0.3 * t;
         } else if (p > 0.78) {
           const exit = Math.min(1, Math.max(0, (p - 0.78) / 0.18));
           glowOp = Math.max(0, 1 - exit);
@@ -210,21 +207,18 @@ export default function GithubActivity() {
 
       // 3. Unified Obsidian Card Choreography (Emerges with scale & elevation, floats with velocity inertia, dissolves on exit)
       if (cardRef.current) {
-        let cOp = 1, cTr = 0, cScale = 1, cBl = 0;
+        let cOp = 1, cTr = 0, cScale = 1;
 
-        if (p < 0.24) {
-          const t = Math.max(0, p / 0.24);
-          const eased = 1 - Math.pow(1 - t, 3);
-          cOp = 0.5 + 0.5 * eased;
-          cTr = (1 - eased) * 48;
-          cScale = 0.92 + 0.08 * eased;
-          cBl = (1 - eased) * 6;
+        if (p < 0.08) {
+          const t = Math.max(0, p / 0.08);
+          cOp = 0.9 + 0.1 * t;
+          cTr = (1 - t) * 14;
+          cScale = 0.98 + 0.02 * t;
         } else if (p > 0.78) {
           const exit = Math.min(1, Math.max(0, (p - 0.78) / 0.18));
           cOp = Math.max(0, 1 - exit);
           cTr = -exit * 45;
           cScale = 1 - exit * 0.06;
-          cBl = exit * 8;
         } else {
           // Subtle organic parallax drift during active interaction
           cTr = (p - 0.51) * -14;
@@ -235,16 +229,16 @@ export default function GithubActivity() {
 
         cardRef.current.style.opacity = cOp.toFixed(3);
         cardRef.current.style.transform = `translateY(${finalTr.toFixed(1)}px) scale(${cScale.toFixed(3)})`;
-        cardRef.current.style.filter = `blur(${cBl.toFixed(1)}px)`;
+        cardRef.current.style.filter = "none";
       }
 
       // 4. Sub-footer Choreography
       if (footerRef.current) {
         let fOp = 1, fTr = 0;
-        if (p < 0.26) {
-          const t = Math.max(0, p / 0.26);
-          fOp = t;
-          fTr = (1 - t) * 16;
+        if (p < 0.08) {
+          const t = Math.max(0, p / 0.08);
+          fOp = 0.9 + 0.1 * t;
+          fTr = (1 - t) * 10;
         } else if (p > 0.78) {
           const exit = Math.min(1, Math.max(0, (p - 0.78) / 0.18));
           fOp = Math.max(0, 1 - exit);
@@ -400,7 +394,7 @@ export default function GithubActivity() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "0 24px",
+          padding: "0 clamp(38px, 6.5vw, 96px)",
           boxSizing: "border-box",
         }}
       >

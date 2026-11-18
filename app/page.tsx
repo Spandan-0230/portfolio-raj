@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import LanguageShowcase from "./components/LanguageShowcase";
 import GithubActivity from "./components/GithubActivity";
-import HammerShowcase from "./components/HammerShowcase";
+import WorksShowcase from "./components/WorksShowcase";
 import SmoothScrollDamper from "./components/SmoothScrollDamper";
 import ScrollPrompt from "./components/ScrollPrompt";
+import SideMargins from "./components/SideMargins";
+import Header from "./components/Header";
 
-const TOTAL_FRAMES = 331;
+const TOTAL_FRAMES = 196;
 const LERP_FACTOR = 0.085;
 
 // Persistent frame cache (outside component lifecycle)
@@ -66,8 +67,8 @@ function renderImage(
   canvasW: number,
   canvasH: number
 ) {
-  const iw = img.naturalWidth || 1920;
-  const ih = img.naturalHeight || 1080;
+  const iw = img.naturalWidth || 3840;
+  const ih = img.naturalHeight || 2160;
 
   const scale = Math.max(canvasW / iw, canvasH / ih);
   const rw = iw * scale;
@@ -209,7 +210,7 @@ export default function Home() {
 
       // 2. Frame-to-frame scrubbing:
       // Holds frame 1 while emerging from black (0.00 -> 0.02),
-      // then scrubs seamlessly through frames 1..331 up to 0.82 progress.
+      // then scrubs seamlessly through frames 1..196 up to 0.82 progress.
       const FRAME_START_PROGRESS = 0.02;
       const FRAME_MAX_PROGRESS = 0.82;
       if (progress <= FRAME_START_PROGRESS) {
@@ -455,7 +456,7 @@ export default function Home() {
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
-              padding: "0 24px",
+              padding: "0 clamp(32px, 7vw, 110px)",
               zIndex: 15,
               opacity: 0,
               pointerEvents: "none",
@@ -513,14 +514,14 @@ export default function Home() {
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
-              padding: "0 24px",
+              padding: "0 clamp(32px, 7vw, 110px)",
               zIndex: 15,
               opacity: 0,
               pointerEvents: "none",
               userSelect: "none",
             }}
           >
-            {/* Title: SOFTWARE DEVELOPER with S·H·A·G·A Octagonal Alphabet & Cyan Accent */}
+            {/* Title: SOFTWARE DEVELOPER with S·H·A·G·A Octagonal Alphabet & Black/White Dual-Tone */}
             <h1
               style={{
                 margin: 0,
@@ -531,13 +532,11 @@ export default function Home() {
                 lineHeight: 1.08,
                 textTransform: "uppercase",
                 backgroundImage:
-                  "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #D2F0F7 60%, #7FE0F4 84%, #42C8E8 100%)",
+                  "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #A1A1AA 58%, #3F3F46 78%, #09090B 94%, #000000 100%)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 color: "transparent",
-                filter:
-                  "drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 10px rgba(56, 189, 248, 0.18))",
               }}
             >
               <br></br>
@@ -574,14 +573,14 @@ export default function Home() {
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
-              padding: "0 24px",
+              padding: "0 clamp(32px, 7vw, 110px)",
               zIndex: 15,
               opacity: 0,
               pointerEvents: "none",
               userSelect: "none",
             }}
           >
-            {/* Title: AI ENGINEER with S·H·A·G·A Octagonal Alphabet & Cyan Accent */}
+            {/* Title: AI ENGINEER with S·H·A·G·A Octagonal Alphabet & Black/White Dual-Tone */}
             <h1
               style={{
                 margin: 0,
@@ -592,13 +591,11 @@ export default function Home() {
                 lineHeight: 1.08,
                 textTransform: "uppercase",
                 backgroundImage:
-                  "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #D2F0F7 60%, #7FE0F4 84%, #42C8E8 100%)",
+                  "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 36%, #A1A1AA 58%, #3F3F46 78%, #09090B 94%, #000000 100%)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 color: "transparent",
-                filter:
-                  "drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 10px rgba(56, 189, 248, 0.18))",
               }}
             >
               <br></br>
@@ -643,14 +640,17 @@ export default function Home() {
       {/* Page 2: GitHub Contribution Activity Section */}
       <GithubActivity />
 
-      {/* Page 3: Hammer 3D Canvas Scroll Animation */}
-      <HammerShowcase />
-
-      {/* Page 4: Languages Showcase Section */}
-      <LanguageShowcase />
+      {/* Page 3: My Works Showcase Section */}
+      <WorksShowcase />
 
       {/* Smooth Page-Wise Scroll Damper with Haptic Feedback */}
       <SmoothScrollDamper />
+
+      {/* Dynamic Cinematic Header (Revealed after Welcome screen) */}
+      <Header />
+
+      {/* Universal Framed Side Margins for All Pages */}
+      <SideMargins />
     </div>
   );
 }
