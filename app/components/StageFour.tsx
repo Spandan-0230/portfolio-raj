@@ -168,6 +168,27 @@ function describeDonutSegment(
   ].join(" ");
 }
 
+// Custom 4-triangle cross bullet icon (#be2bde, no outer glow)
+function FeatureBulletIcon() {
+  return (
+    <span className="feature-bullet" aria-hidden="true">
+      <svg
+        width="11"
+        height="11"
+        viewBox="0 0 24 24"
+        fill="#be2bde"
+        xmlns="http://www.w3.org/2000/svg"
+        className="feature-bullet-svg"
+      >
+        <polygon points="8.6,2.5 15.4,2.5 12,9.5" />
+        <polygon points="8.6,21.5 15.4,21.5 12,14.5" />
+        <polygon points="2.5,8.6 2.5,15.4 9.5,12" />
+        <polygon points="21.5,8.6 21.5,15.4 14.5,12" />
+      </svg>
+    </span>
+  );
+}
+
 export default function StageFour() {
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -322,10 +343,6 @@ export default function StageFour() {
           height: "100vh",
           overflow: "hidden",
           backgroundColor: "#000000",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "clamp(24px, 3.8vh, 48px) var(--page-frame-padding, clamp(68px, 8.5vw, 134px)) 0",
           boxSizing: "border-box",
         }}
       >
@@ -469,11 +486,24 @@ export default function StageFour() {
                 Offline-first Android fitness &amp; nutrient tracker in Kotlin &amp; Jetpack Compose. Features daily macro/hydration/step logging, historical stats &amp; streaks, interactive home widgets, persistent custom notifications, and live background step sync in a true-black OLED UI.
                 <br></br>
                 <br></br>
-                <ul className="feature-list" style={{ paddingLeft: "60px" }}>
-                  <li>🧬 Multi-Stage Biometric Onboarding &amp; Calibration</li>
-                  <li>📊 Live Telemetry Dashboard &amp; Quick-Action Logging</li>
-                  <li>📱 Custom Android Home Screen Widget</li>
-                  <li>📳 Smart Notifications &amp; Local-First Storage</li>
+                <ul className="feature-list">
+                  <li className="feature-item">
+                    <FeatureBulletIcon />
+                    <span className="feature-text">🧬 Multi-Stage Biometric Onboarding &amp; Calibration</span>
+                  </li>
+                  <li className="feature-item">
+                    <FeatureBulletIcon />
+                    <span className="feature-text">📊 Live Telemetry Dashboard &amp; Quick-Action Logging</span>
+                  </li>
+                  <li className="feature-item">
+                    <FeatureBulletIcon />
+                    <span className="feature-text">📱 Custom Android Home Screen Widget</span>
+                  </li>
+                  <li className="feature-item">
+                    <FeatureBulletIcon />
+                    <span className="feature-text">📳 Smart Notifications &amp; Local-First Storage</span>
+                  </li>
+                  <br></br>
                 </ul>
               </div>
             </div>
@@ -515,10 +545,7 @@ export default function StageFour() {
                       <span className="donut-center-label">{LANG_DATA[activeLang].shortName}</span>
                     </>
                   ) : (
-                    <>
-                      <span className="donut-center-val">100%</span>
-                      <span className="donut-center-label">Stack</span>
-                    </>
+                    <span className="donut-center-val">100%</span>
                   )}
                 </div>
               </div>
@@ -668,15 +695,26 @@ export default function StageFour() {
           COMPONENT STYLES (Clean, Symmetric, Responsive)
           ========================================================================= */}
       <style jsx>{`
+        .sticky-stage {
+          --stage-col-gap: clamp(24px, 2.6vw, 50px);
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          padding-top: clamp(24px, 3.8vh, 48px);
+          padding-bottom: 0;
+          padding-left: calc(var(--margin-pillar-width, clamp(48px, 6.5vw, 102px)) + var(--stage-col-gap));
+          padding-right: calc(var(--margin-pillar-width, clamp(48px, 6.5vw, 102px)) + var(--stage-col-gap));
+          box-sizing: border-box;
+        }
+
         .stage-content-wrapper {
           position: relative;
           z-index: 10;
           display: flex;
           align-items: center;
-          justify-content: center;
-          width: 100%;
-          max-width: 1160px;
-          gap: clamp(24px, 2.6vw, 42px);
+          justify-content: flex-start;
+          width: fit-content;
+          gap: var(--stage-col-gap);
           box-sizing: border-box;
           margin-top: clamp(6px, 1.5vh, 18px);
         }
@@ -821,8 +859,8 @@ export default function StageFour() {
            ------------------------------------------------------------- */
         .showcase-right-pane {
           flex: 0 0 auto;
-          width: clamp(310px, 26vw, 400px);
-          max-width: 400px;
+          width: clamp(200px, 32vw, 500px);
+          max-width: 650px;
           height: clamp(390px, min(50vh, 29vw), 490px);
           display: flex;
           flex-direction: column;
@@ -860,12 +898,50 @@ export default function StageFour() {
         .project-desc-text {
           margin: 0;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
-          font-size: clamp(12.5px, 0.92vw, 14px);
+          font-size: clamp(15px, 0.92vw, 19px);
           line-height: 1.64;
           color: rgba(255, 255, 255, 0.74);
-          max-width: 390px;
+          max-width: 650px;
           letter-spacing: -0.005em;
-          text-align: left;
+          text-align: centre;
+        }
+
+        /* Feature List with custom 4-triangle cross bullets */
+        .feature-list {
+          list-style: none;
+          margin: 0;
+          padding: 0 0 0 clamp(2px, 3.2vw, 10px);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .feature-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .feature-bullet {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 12px;
+          height: 20px;
+          flex-shrink: 0;
+        }
+
+        .feature-bullet-svg {
+          width: 11px;
+          height: 11px;
+          display: block;
+          filter: none;
+        }
+
+        .feature-text {
+          flex: 1;
         }
 
         /* Bottom Section: Circular Donut Stats & 2-Column Tech Stack */
@@ -906,7 +982,7 @@ export default function StageFour() {
 
         .donut-path:hover,
         .donut-path.active-slice {
-          filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+          opacity: 0.95;
         }
 
         .donut-center-info {
@@ -1178,12 +1254,20 @@ export default function StageFour() {
            RESPONSIVE BREAKPOINTS
            ------------------------------------------------------------- */
         @media (max-width: 1024px) {
+          .sticky-stage {
+            justify-content: center;
+            padding-left: var(--page-frame-padding, 16px);
+            padding-right: var(--page-frame-padding, 16px);
+          }
+
           .stage-content-wrapper {
             flex-direction: column;
             gap: 24px;
             overflow-y: auto;
             max-height: 88vh;
             padding: 20px 0;
+            width: 100%;
+            justify-content: center;
           }
 
           .center-divider {
