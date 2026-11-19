@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { StageFiveLeftPane, StageFiveRightPane } from "./StageFive";
 
 interface ProjectImage {
   id: number;
@@ -192,6 +193,15 @@ function FeatureBulletIcon() {
 export default function StageFour() {
   const trackRef = useRef<HTMLDivElement>(null);
 
+  // Elevator Scroll Animation Layer Refs
+  const stage4LeftRef = useRef<HTMLDivElement>(null);
+  const stage4RightRef = useRef<HTMLDivElement>(null);
+  const stage5LeftRef = useRef<HTMLDivElement>(null);
+  const stage5RightRef = useRef<HTMLDivElement>(null);
+  const targetProgress = useRef<number>(0);
+  const currentProgress = useRef<number>(0);
+  const rafId = useRef<number | null>(null);
+
   // Active hovered language index for Donut Chart
   const [activeLang, setActiveLang] = useState<number | null>(null);
 
@@ -264,6 +274,97 @@ export default function StageFour() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isModalOpen, closeModal, nextModalImage, prevModalImage]);
 
+  // Smooth Elevator Scroll Transition: Stage Four to Stage Five
+  // The center vertical divider line stays 100% stationary, while both left and right sides move UPWARD on scroll.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const updateScrollProgress = () => {
+      const rect = track.getBoundingClientRect();
+      const winH = window.innerHeight;
+      const totalScroll = rect.height - winH;
+      if (totalScroll <= 0) {
+        targetProgress.current = 0;
+        return;
+      }
+      const scrolled = Math.max(0, -rect.top);
+      targetProgress.current = Math.max(0, Math.min(1, scrolled / totalScroll));
+    };
+
+    const renderLoop = () => {
+      const diff = targetProgress.current - currentProgress.current;
+      if (Math.abs(diff) > 0.0001) {
+        currentProgress.current += diff * 0.12;
+      } else {
+        currentProgress.current = targetProgress.current;
+      }
+
+      const p = currentProgress.current;
+      // Zone partitioning:
+      // 0.00 - 0.18: Stage 4 full resting view
+      // 0.18 - 0.82: Dual upward elevator transition
+      // 0.82 - 1.00: Stage 5 full resting view
+      let norm = 0;
+      if (p <= 0.18) {
+        norm = 0;
+      } else if (p >= 0.82) {
+        norm = 1;
+      } else {
+        norm = (p - 0.18) / 0.64;
+      }
+
+      // Smooth cubic easeInOut curve
+      const ease = norm < 0.5 ? 4 * norm * norm * norm : 1 - Math.pow(-2 * norm + 2, 3) / 2;
+
+      // Stage 4 translates UPWARD: 0vh -> -115vh
+      const s4Y = -115 * ease;
+      const s4Opacity = Math.max(0, 1 - ease * 1.25);
+
+      // Stage 5 translates UPWARD from below: +115vh -> 0vh
+      const s5Y = 115 * (1 - ease);
+      const s5Opacity = Math.min(1, Math.max(0, (ease - 0.08) * 1.25));
+
+      const isStage4Active = p < 0.5;
+
+      if (stage4LeftRef.current) {
+        stage4LeftRef.current.style.transform = `translate3d(0, ${s4Y}vh, 0)`;
+        stage4LeftRef.current.style.opacity = `${s4Opacity}`;
+        stage4LeftRef.current.style.pointerEvents = isStage4Active ? "auto" : "none";
+      }
+      if (stage4RightRef.current) {
+        stage4RightRef.current.style.transform = `translate3d(0, ${s4Y}vh, 0)`;
+        stage4RightRef.current.style.opacity = `${s4Opacity}`;
+        stage4RightRef.current.style.pointerEvents = isStage4Active ? "auto" : "none";
+      }
+      if (stage5LeftRef.current) {
+        stage5LeftRef.current.style.transform = `translate3d(0, ${s5Y}vh, 0)`;
+        stage5LeftRef.current.style.opacity = `${s5Opacity}`;
+        stage5LeftRef.current.style.pointerEvents = isStage4Active ? "none" : "auto";
+      }
+      if (stage5RightRef.current) {
+        stage5RightRef.current.style.transform = `translate3d(0, ${s5Y}vh, 0)`;
+        stage5RightRef.current.style.opacity = `${s5Opacity}`;
+        stage5RightRef.current.style.pointerEvents = isStage4Active ? "none" : "auto";
+      }
+
+      rafId.current = requestAnimationFrame(renderLoop);
+    };
+
+    updateScrollProgress();
+    currentProgress.current = targetProgress.current;
+    rafId.current = requestAnimationFrame(renderLoop);
+
+    window.addEventListener("scroll", updateScrollProgress, { passive: true });
+    window.addEventListener("resize", updateScrollProgress, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", updateScrollProgress);
+      window.removeEventListener("resize", updateScrollProgress);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
+
   // Modal Mouse Wheel Zoom
   const handleModalWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -325,13 +426,24 @@ export default function StageFour() {
       style={{
         position: "relative",
         width: "100%",
-        minHeight: "220vh",
+        minHeight: "360vh",
         backgroundColor: "#000000",
         color: "#ffffff",
         zIndex: 20,
         boxSizing: "border-box",
       }}
     >
+      {/* Stage Five Viewport Anchor (Allows smooth scroll snapping & hash navigation) */}
+      <div
+        id="stage5"
+        style={{
+          position: "absolute",
+          top: "180vh",
+          height: "180vh",
+          width: "100%",
+          pointerEvents: "none",
+        }}
+      />
       {/* Pinned Sticky Stage - Full Viewport Presentation */}
       <div
         className="sticky-stage"
@@ -412,317 +524,333 @@ export default function StageFour() {
             ========================================================================= */}
         <div className="stage-content-wrapper">
           {/* -------------------------------------------------------------
-              LEFT: Photo Showcase with Symmetric Alignment (Portrait Wireframe)
+              LEFT: Photo Showcase with Symmetric Alignment (Dual Layer: Stage 4 & Stage 5)
               ------------------------------------------------------------- */}
           <div className="showcase-left-pane">
-            <div className="portrait-showcase-container">
-              {/* GitHub Repo Button (Positioned just above the middle phone) */}
-              <div className="github-link-container">
-                <a
-                  href="https://github.com/Spandan-0230/BioSync"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="github-repo-link"
-                  title="Open GitHub/Spandan-0230/BioSync"
-                >
-                  <svg
-                    className="github-icon"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    />
-                  </svg>
-                  <span className="github-link-text">GitHub/BioSync</span>
+                    {/* Stage Four Left Layer (BioSync) */}
+            <div ref={stage4LeftRef} className="project-layer-pane">
+                    <div className="portrait-showcase-container">
+                      {/* GitHub Repo Button (Positioned just above the middle phone) */}
+                      <div className="github-link-container">
+                        <a
+                          href="https://github.com/Spandan-0230/BioSync"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="github-repo-link"
+                          title="Open GitHub/Spandan-0230/BioSync"
+                        >
+                    <svg
+                      className="github-icon"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                      />
+                    </svg>
+                    <span className="github-link-text">GitHub/BioSync</span>
                 </a>
               </div>
 
-              {/* 3 Tall Portrait Smartphone Blocks (1.png, 2.png, 5.png) */}
-              <div className="portrait-top-row">
-                {featuredImages.map((img) => {
-                  const globalIdx = BIOSYNC_IMAGES.findIndex((b) => b.id === img.id);
-                  return (
-                    <div
-                      key={img.id}
-                      className="portrait-device-card"
-                      onClick={() => openModal(globalIdx)}
-                      title={`Click to zoom: ${img.title}`}
-                    >
-                      <div className="device-screen-inner">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={img.src}
-                          alt={img.title}
-                          className="device-img"
-                        />
-                      </div>
+                        {/* 3 Tall Portrait Smartphone Blocks (1.png, 2.png, 5.png) */}
+                        <div className="portrait-top-row">
+                          {featuredImages.map((img) => {
+                            const globalIdx = BIOSYNC_IMAGES.findIndex((b) => b.id === img.id);
+                            return (
+                              <div
+                                key={img.id}
+                                className="portrait-device-card"
+                                onClick={() => openModal(globalIdx)}
+                                title={`Click to zoom: ${img.title}`}
+                              >
+                                <div className="device-screen-inner">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={img.src}
+                                    alt={img.title}
+                                    className="device-img"
+                                  />
+                                </div>
+                              </div>
+                      );
+                  })}
                     </div>
-                  );
-                })}
-              </div>
 
-              {/* See More Action (Matching provided UI: text + down chevron) */}
-              <div className="see-more-container">
-                <button
-                  type="button"
-                  className="see-more-btn"
-                  title="See more BioSync screenshots"
-                >
-                  <span className="see-more-text">See more</span>
-                  <svg
-                    className="see-more-icon"
-                    width="14"
-                    height="9"
-                    viewBox="0 0 14 9"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M1.5 1.5L7 7L12.5 1.5"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
+                        {/* See More Action (Matching provided UI: text + down chevron) */}
+                <div className="see-more-container">
+                        <button
+                          type="button"
+                          className="see-more-btn"
+                          title="See more BioSync screenshots"
+                        >
+                    <span className="see-more-text">See more</span>
+                    <svg
+                      className="see-more-icon"
+                      width="14"
+                      height="9"
+                      viewBox="0 0 14 9"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M1.5 1.5L7 7L12.5 1.5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
             </div>
           </div>
 
-          {/* -------------------------------------------------------------
-              CENTER: Elegant Vertical Divider Line "|"
+          {/* Stage Five Left Layer (Upcoming Project Placeholder) */}
+          <div ref={stage5LeftRef} className="project-layer-pane layer-absolute layer-hidden">
+            <StageFiveLeftPane />
+          </div>
+        </div>
+
+        {/* -------------------------------------------------------------
+              CENTER: Elegant Vertical Divider Line "|" (Stationary)
               ------------------------------------------------------------- */}
-          <div className="center-divider" aria-hidden="true" />
+        <div className="center-divider" aria-hidden="true" />
 
-          {/* -------------------------------------------------------------
-              RIGHT: Project Title, Description & Language Distribution Stats
+        {/* -------------------------------------------------------------
+              RIGHT: Project Title, Description & Language Distribution Stats (Dual Layer)
               ------------------------------------------------------------- */}
-          <div className="showcase-right-pane">
-            <div className="project-header-group">
-              <h1 className="project-title-italic">
-                Bio<span className="neon-sync-text">Sync</span>
-              </h1>
-              <div className="project-desc-text">
-                <br></br>
-                Offline-first Android fitness &amp; nutrient tracker in Kotlin &amp;  Features daily macro/hydration/step logging, historical stats &amp; streaks, interactive home widgets, persistent custom notifications, and live background step sync in a true-black OLED UI.
+        <div className="showcase-right-pane">
+              {/* Stage Four Right Layer (BioSync) */}
+              <div ref={stage4RightRef} className="project-layer-pane">
+                <div className="project-header-group">
+                  <h1 className="project-title-italic">
+                    Bio<span className="neon-sync-text">Sync</span>
+                  </h1>
+                  <div className="project-desc-text">
+                    <br></br>
+                    Offline-first Android fitness &amp; nutrient tracker in Kotlin &amp;  Features daily macro/hydration/step logging, historical stats &amp; streaks, interactive home widgets, persistent custom notifications, and live background step sync in a true-black OLED UI.
 
-                <ul className="feature-list">
-                  <li className="feature-item">
-                    <FeatureBulletIcon />
-                    <span className="feature-text">🧬 Multi-Stage Biometric Onboarding &amp; Calibration</span>
-                  </li>
-                  <li className="feature-item">
-                    <FeatureBulletIcon />
-                    <span className="feature-text">📊 Live Telemetry Dashboard &amp; Quick-Action Logging</span>
-                  </li>
-                  <li className="feature-item">
-                    <FeatureBulletIcon />
-                    <span className="feature-text">📱 Custom Android Home Screen Widget</span>
-                  </li>
-                  <li className="feature-item">
-                    <FeatureBulletIcon />
-                    <span className="feature-text">📳 Smart Notifications &amp; Local-First Storage</span>
-                  </li>
-                  <br></br>
-                </ul>
-              </div>
-            </div>
+                    <ul className="feature-list">
+                      <li className="feature-item">
+                        <FeatureBulletIcon />
+                        <span className="feature-text">🧬 Multi-Stage Biometric Onboarding &amp; Calibration</span>
+                      </li>
+                      <li className="feature-item">
+                        <FeatureBulletIcon />
+                        <span className="feature-text">📊 Live Telemetry Dashboard &amp; Quick-Action Logging</span>
+                      </li>
+                      <li className="feature-item">
+                        <FeatureBulletIcon />
+                        <span className="feature-text">📱 Custom Android Home Screen Widget</span>
+                      </li>
+                      <li className="feature-item">
+                        <FeatureBulletIcon />
+                        <span className="feature-text">📳 Smart Notifications &amp; Local-First Storage</span>
+                      </li>
+                      <br></br>
+                    </ul>
+                  </div>
+                </div>
 
-            {/* Circular Stats & Language Distribution Breakdown */}
-            <div className="stats-showcase-box">
-              {/* Circular Donut Chart */}
-              <div className="donut-chart-wrapper">
-                <svg width="124" height="124" viewBox="0 0 100 100" className="donut-svg">
-                  {donutSlices.map((slice, idx) => {
-                    const isHovered = activeLang === idx;
-                    return (
-                      <path
-                        key={slice.id}
-                        d={describeDonutSegment(
-                          50,
-                          50,
-                          isHovered ? 29 : 31,
-                          isHovered ? 47 : 44,
-                          slice.startAngle,
-                          slice.endAngle
-                        )}
-                        fill={slice.color}
-                        className={`donut-path ${isHovered ? "active-slice" : ""}`}
+                      {/* Circular Stats & Language Distribution Breakdown */ }
+                      <div className="stats-showcase-box">
+                        {/* Circular Donut Chart */}
+                        <div className="donut-chart-wrapper">
+                          <svg width="124" height="124" viewBox="0 0 100 100" className="donut-svg">
+                            {donutSlices.map((slice, idx) => {
+                              const isHovered = activeLang === idx;
+                              return (
+                                <path
+                                  key={slice.id}
+                                  d={describeDonutSegment(
+                                    50,
+                                    50,
+                                    isHovered ? 29 : 31,
+                                    isHovered ? 47 : 44,
+                                    slice.startAngle,
+                                    slice.endAngle
+                                  )}
+                                  fill={slice.color}
+                                  className={`donut-path ${isHovered ? "active-slice" : ""}`}
+                                  onMouseEnter={() => setActiveLang(idx)}
+                                  onMouseLeave={() => setActiveLang(null)}
+                                />
+                              );
+                            })}
+                          </svg>
+
+                          {/* Donut Center Info */}
+                          <div className="donut-center-info">
+                            {activeLang !== null ? (
+                              <>
+                                <span className="donut-center-val" style={{ color: LANG_DATA[activeLang].color }}>
+                                  {LANG_DATA[activeLang].pct}%
+                                </span>
+                                <span className="donut-center-label">{LANG_DATA[activeLang].shortName}</span>
+                              </>
+                            ) : (
+                              <span className="donut-center-val">100%</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Languages List: Kotlin 98.4%, HTML 1.6% (without dots, just icon + name + %) */}
+                        <div className="lang-list-container">
+                          {LANG_DATA.map((item, idx) => {
+                            const isHovered = activeLang === idx;
+                            return (
+                      <div
+                        key={item.id}
+                        className={`lang-item-row ${isHovered ? "active-row" : ""}`}
                         onMouseEnter={() => setActiveLang(idx)}
                         onMouseLeave={() => setActiveLang(null)}
-                      />
-                    );
+                              >
+                        <span className="lang-icon-wrapper">{item.icon}</span>
+                        <span className="lang-name-text">{item.name}</span>
+                        <span className="lang-pct-text">{item.pct}%</span>
+                      </div>
+                        );
                   })}
-                </svg>
-
-                {/* Donut Center Info */}
-                <div className="donut-center-info">
-                  {activeLang !== null ? (
-                    <>
-                      <span className="donut-center-val" style={{ color: LANG_DATA[activeLang].color }}>
-                        {LANG_DATA[activeLang].pct}%
-                      </span>
-                      <span className="donut-center-label">{LANG_DATA[activeLang].shortName}</span>
-                    </>
-                  ) : (
-                    <span className="donut-center-val">100%</span>
-                  )}
-                </div>
+                      </div>
+              </div>
               </div>
 
-              {/* Languages List: Kotlin 98.4%, HTML 1.6% (without dots, just icon + name + %) */}
-              <div className="lang-list-container">
-                {LANG_DATA.map((item, idx) => {
-                  const isHovered = activeLang === idx;
-                  return (
-                    <div
-                      key={item.id}
-                      className={`lang-item-row ${isHovered ? "active-row" : ""}`}
-                      onMouseEnter={() => setActiveLang(idx)}
-                      onMouseLeave={() => setActiveLang(null)}
-                    >
-                      <span className="lang-icon-wrapper">{item.icon}</span>
-                      <span className="lang-name-text">{item.name}</span>
-                      <span className="lang-pct-text">{item.pct}%</span>
-                    </div>
-                  );
-                })}
+              {/* Stage Five Right Layer (Upcoming Project Placeholder) */}
+              <div ref={stage5RightRef} className="project-layer-pane layer-absolute layer-hidden">
+                <StageFiveRightPane />
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* =========================================================================
+        {/* =========================================================================
           FULL-SCREEN INTERACTIVE LIGHTBOX ZOOM MODAL
           ========================================================================= */}
-      {isModalOpen && (
-        <div
-          className="lightbox-overlay"
-          onClick={closeModal}
-          role="dialog"
-          aria-modal="true"
-        >
-          {/* Top Control Bar */}
+        {isModalOpen && (
           <div
-            className="lightbox-top-bar"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="lightbox-title-text">
-              <span className="brand-pill">BioSync</span>
-              <span className="sep">/</span>
-              <span className="curr-name">
-                {BIOSYNC_IMAGES[modalIndex].title} (0{modalIndex + 1} of 0{BIOSYNC_IMAGES.length})
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={closeModal}
-              className="lightbox-close-btn"
-              aria-label="Close Lightbox"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Interactive Zoom Canvas Stage */}
-          <div
-            className="lightbox-stage"
-            onWheel={handleModalWheel}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
+            className="lightbox-overlay"
             onClick={closeModal}
+            role="dialog"
+            aria-modal="true"
           >
+            {/* Top Control Bar */}
             <div
-              className="lightbox-img-wrapper"
-              onClick={handleImageClickToggleZoom}
-              style={{
-                transform: `translate(${panPos.x}px, ${panPos.y}px) scale(${zoomScale})`,
-                cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
-              }}
+              className="lightbox-top-bar"
+              onClick={(e) => e.stopPropagation()}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={BIOSYNC_IMAGES[modalIndex].src}
-                alt={BIOSYNC_IMAGES[modalIndex].title}
-                className="lightbox-image"
-                draggable={false}
-              />
+              <div className="lightbox-title-text">
+                <span className="brand-pill">BioSync</span>
+                <span className="sep">/</span>
+                <span className="curr-name">
+                  {BIOSYNC_IMAGES[modalIndex].title} (0{modalIndex + 1} of 0{BIOSYNC_IMAGES.length})
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeModal}
+                className="lightbox-close-btn"
+                aria-label="Close Lightbox"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Interactive Zoom Canvas Stage */}
+            <div
+              className="lightbox-stage"
+              onWheel={handleModalWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onClick={closeModal}
+            >
+              <div
+                className="lightbox-img-wrapper"
+                onClick={handleImageClickToggleZoom}
+                style={{
+                  transform: `translate(${panPos.x}px, ${panPos.y}px) scale(${zoomScale})`,
+                  cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={BIOSYNC_IMAGES[modalIndex].src}
+                  alt={BIOSYNC_IMAGES[modalIndex].title}
+                  className="lightbox-image"
+                  draggable={false}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Floating Control Pill */}
+            <div
+              className="lightbox-bottom-dock"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={prevModalImage}
+                className="dock-btn"
+                title="Previous screen (←)"
+              >
+                ◀ Prev
+              </button>
+              <div className="dock-divider" />
+              <button
+                type="button"
+                onClick={() => {
+                  setZoomScale((prev) => Math.max(1, prev - 0.5));
+                  if (zoomScale <= 1.5) setPanPos({ x: 0, y: 0 });
+                }}
+                className="dock-btn"
+                title="Zoom Out"
+              >
+                −
+              </button>
+              <span className="dock-zoom-text">{Math.round(zoomScale * 100)}%</span>
+              <button
+                type="button"
+                onClick={() => setZoomScale((prev) => Math.min(3.5, prev + 0.5))}
+                className="dock-btn"
+                title="Zoom In"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setZoomScale(1);
+                  setPanPos({ x: 0, y: 0 });
+                }}
+                className="dock-btn-reset"
+                title="Reset Zoom"
+              >
+                Reset
+              </button>
+              <div className="dock-divider" />
+              <button
+                type="button"
+                onClick={nextModalImage}
+                className="dock-btn"
+                title="Next screen (→)"
+              >
+                Next ▶
+              </button>
             </div>
           </div>
+        )}
 
-          {/* Bottom Floating Control Pill */}
-          <div
-            className="lightbox-bottom-dock"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={prevModalImage}
-              className="dock-btn"
-              title="Previous screen (←)"
-            >
-              ◀ Prev
-            </button>
-            <div className="dock-divider" />
-            <button
-              type="button"
-              onClick={() => {
-                setZoomScale((prev) => Math.max(1, prev - 0.5));
-                if (zoomScale <= 1.5) setPanPos({ x: 0, y: 0 });
-              }}
-              className="dock-btn"
-              title="Zoom Out"
-            >
-              −
-            </button>
-            <span className="dock-zoom-text">{Math.round(zoomScale * 100)}%</span>
-            <button
-              type="button"
-              onClick={() => setZoomScale((prev) => Math.min(3.5, prev + 0.5))}
-              className="dock-btn"
-              title="Zoom In"
-            >
-              +
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setZoomScale(1);
-                setPanPos({ x: 0, y: 0 });
-              }}
-              className="dock-btn-reset"
-              title="Reset Zoom"
-            >
-              Reset
-            </button>
-            <div className="dock-divider" />
-            <button
-              type="button"
-              onClick={nextModalImage}
-              className="dock-btn"
-              title="Next screen (→)"
-            >
-              Next ▶
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
+        {/* =========================================================================
           COMPONENT STYLES (Clean, Symmetric, Responsive)
           ========================================================================= */}
-      <style jsx>{`
+        <style jsx>{`
         .sticky-stage {
           --stage-col-gap: clamp(24px, 2.6vw, 50px);
           display: flex;
@@ -986,6 +1114,32 @@ export default function StageFour() {
           padding: 0;
           margin: 0;
           box-sizing: border-box;
+          position: relative;
+        }
+
+        /* Dual-Layer Transition Wrapper for Left & Right Panes */
+        .project-layer-pane {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          will-change: transform, opacity;
+        }
+
+        .showcase-right-pane .project-layer-pane {
+          align-items: flex-start;
+          justify-content: space-between;
+        }
+
+        .project-layer-pane.layer-absolute {
+          position: absolute;
+          inset: 0;
+        }
+
+        .project-layer-pane.layer-hidden {
+          pointer-events: none;
         }
 
         .project-header-group {
