@@ -964,6 +964,7 @@ export default function StageFour() {
           align-items: center;
           justify-content: center;
           position: relative;
+          height: clamp(390px, min(50vh, 29vw), 490px);
         }
 
         /* Portrait View Layout */

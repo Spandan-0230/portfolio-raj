@@ -509,6 +509,7 @@ export function StageSixLeftPane() {
           justify-content: center;
           width: 100%;
           max-width: clamp(520px, 44vw, 680px);
+          margin-top: clamp(24px, 3.2vh, 36px);
         }
 
         /* GitHub Repo Link (Positioned cleanly above the main landscape screen) */
@@ -1150,9 +1151,9 @@ export function StageSixRightPane() {
         .stats-showcase-box {
           display: flex;
           align-items: center;
-          gap: clamp(14px, 1.8vw, 20px);
+          gap: clamp(14px, 1.8vw, 22px);
           width: 100%;
-          max-width: 390px;
+          max-width: 480px;
           padding: 0;
           margin: 0;
         }
@@ -1220,29 +1221,32 @@ export function StageSixRightPane() {
           white-space: nowrap;
         }
 
+        /* 2x2 Matrix Grid for Languages Breakdown */
         .lang-list-container {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          min-width: 165px;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(130px, 1fr));
+          column-gap: clamp(12px, 1.6vw, 20px);
+          row-gap: 8px;
+          align-items: center;
         }
 
         .lang-item-row {
           display: flex;
           align-items: center;
-          gap: 9px;
+          gap: 8px;
           padding: 3px 0;
           background: transparent;
           border: none;
           cursor: pointer;
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           user-select: none;
+          white-space: nowrap;
         }
 
         .lang-item-row:hover,
         .lang-item-row.active-row {
           background: transparent;
-          transform: translateX(3px);
+          transform: translateX(2px);
         }
 
         .lang-icon-wrapper {
@@ -1269,7 +1273,7 @@ export function StageSixRightPane() {
           font-weight: 600;
           color: rgba(255, 255, 255, 0.45);
           margin-left: auto;
-          padding-left: 12px;
+          padding-left: 8px;
         }
 
         .lang-item-row:hover .lang-name-text,
