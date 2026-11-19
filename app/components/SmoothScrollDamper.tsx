@@ -73,6 +73,14 @@ export default function SmoothScrollDamper() {
         pages.push({ id: "stage4", name: "Stage 4", start, end });
       }
 
+      // Page 5: Languages Showcase
+      const langEl = document.getElementById("languages");
+      if (langEl) {
+        const start = langEl.offsetTop;
+        const end = start + Math.max(0, langEl.offsetHeight - winH);
+        pages.push({ id: "languages", name: "Languages", start, end });
+      }
+
       return pages;
     };
 

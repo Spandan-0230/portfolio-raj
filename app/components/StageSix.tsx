@@ -1017,8 +1017,17 @@ export function StageSixRightPane() {
           </div>
         </div>
 
-        {/* Languages Breakdown List (TS, JS, CSS, HTML) */}
-        <div className="lang-list-container">
+        {/* Languages Breakdown 2x2 Matrix (TS, JS, CSS, HTML) */}
+        <div
+          className="lang-list-container"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(120px, 1fr))",
+            columnGap: "18px",
+            rowGap: "8px",
+            alignItems: "center",
+          }}
+        >
           {LEDGER_LANG_DATA.map((item, idx) => {
             const isHovered = activeLang === idx;
             return (
@@ -1223,30 +1232,30 @@ export function StageSixRightPane() {
 
         /* 2x2 Matrix Grid for Languages Breakdown */
         .lang-list-container {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(130px, 1fr));
-          column-gap: clamp(12px, 1.6vw, 20px);
-          row-gap: 8px;
-          align-items: center;
+          display: grid !important;
+          grid-template-columns: repeat(2, minmax(120px, 1fr)) !important;
+          column-gap: clamp(12px, 1.6vw, 20px) !important;
+          row-gap: 8px !important;
+          align-items: center !important;
         }
 
         .lang-item-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 3px 0;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-          user-select: none;
-          white-space: nowrap;
+          display: flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+          padding: 3px 0 !important;
+          background: transparent !important;
+          border: none !important;
+          cursor: pointer !important;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          user-select: none !important;
+          white-space: nowrap !important;
         }
 
         .lang-item-row:hover,
         .lang-item-row.active-row {
-          background: transparent;
-          transform: translateX(2px);
+          background: transparent !important;
+          transform: translateX(2px) !important;
         }
 
         .lang-icon-wrapper {

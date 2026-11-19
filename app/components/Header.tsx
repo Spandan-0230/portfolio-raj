@@ -11,6 +11,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "hero", label: "Home" },
   { id: "activity", label: "Activity" },
   { id: "works", label: "Work" },
+  { id: "languages", label: "Languages" },
 ];
 
 export default function Header() {
@@ -31,8 +32,11 @@ export default function Header() {
       const winH = window.innerHeight;
       const actEl = document.getElementById("activity");
       const worksEl = document.getElementById("works");
+      const langEl = document.getElementById("languages");
 
-      if (worksEl && scrollY >= worksEl.offsetTop - winH * 0.4) {
+      if (langEl && scrollY >= langEl.offsetTop - winH * 0.4) {
+        setActiveSection("languages");
+      } else if (worksEl && scrollY >= worksEl.offsetTop - winH * 0.4) {
         setActiveSection("works");
       } else if (actEl && scrollY >= actEl.offsetTop - winH * 0.4) {
         setActiveSection("activity");
