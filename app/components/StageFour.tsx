@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { StageFiveLeftPane, StageFiveRightPane } from "./StageFive";
+import { StageSixLeftPane, StageSixRightPane } from "./StageSix";
 
 interface ProjectImage {
   id: number;
@@ -198,6 +199,8 @@ export default function StageFour() {
   const stage4RightRef = useRef<HTMLDivElement>(null);
   const stage5LeftRef = useRef<HTMLDivElement>(null);
   const stage5RightRef = useRef<HTMLDivElement>(null);
+  const stage6LeftRef = useRef<HTMLDivElement>(null);
+  const stage6RightRef = useRef<HTMLDivElement>(null);
   const targetProgress = useRef<number>(0);
   const currentProgress = useRef<number>(0);
   const rafId = useRef<number | null>(null);
@@ -274,7 +277,7 @@ export default function StageFour() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isModalOpen, closeModal, nextModalImage, prevModalImage]);
 
-  // Smooth Elevator Scroll Transition: Stage Four to Stage Five
+  // Smooth Elevator Scroll Transition: Stage Four -> Stage Five -> Stage Six
   // The center vertical divider line stays 100% stationary, while both left and right sides move UPWARD on scroll.
   useEffect(() => {
     const track = trackRef.current;
@@ -301,51 +304,106 @@ export default function StageFour() {
       }
 
       const p = currentProgress.current;
-      // Zone partitioning:
-      // 0.00 - 0.18: Stage 4 full resting view
-      // 0.18 - 0.82: Dual upward elevator transition
-      // 0.82 - 1.00: Stage 5 full resting view
-      let norm = 0;
-      if (p <= 0.18) {
-        norm = 0;
-      } else if (p >= 0.82) {
-        norm = 1;
+
+      // 3-Stage Partitioning:
+      // Zone 1: p <= 0.12 -> Stage 4 Resting View
+      // Zone 2: 0.12 < p < 0.44 -> Transition 1 (Stage 4 lifts upward to -115vh, Stage 5 lifts up to 0vh)
+      // Zone 3: 0.44 <= p <= 0.56 -> Stage 5 Resting View
+      // Zone 4: 0.56 < p < 0.88 -> Transition 2 (Stage 5 lifts upward to -115vh, Stage 6 lifts up to 0vh)
+      // Zone 5: p >= 0.88 -> Stage 6 Resting View
+
+      let s4Y = 0;
+      let s4Opacity = 1;
+      let s5Y = 115;
+      let s5Opacity = 0;
+      let s6Y = 115;
+      let s6Opacity = 0;
+
+      if (p <= 0.12) {
+        s4Y = 0;
+        s4Opacity = 1;
+        s5Y = 115;
+        s5Opacity = 0;
+        s6Y = 115;
+        s6Opacity = 0;
+      } else if (p < 0.44) {
+        const norm1 = (p - 0.12) / 0.32;
+        const ease1 = norm1 < 0.5 ? 4 * norm1 * norm1 * norm1 : 1 - Math.pow(-2 * norm1 + 2, 3) / 2;
+        s4Y = -115 * ease1;
+        s4Opacity = Math.max(0, 1 - ease1 * 1.25);
+        s5Y = 115 * (1 - ease1);
+        s5Opacity = Math.min(1, Math.max(0, (ease1 - 0.08) * 1.25));
+        s6Y = 115;
+        s6Opacity = 0;
+      } else if (p <= 0.56) {
+        s4Y = -115;
+        s4Opacity = 0;
+        s5Y = 0;
+        s5Opacity = 1;
+        s6Y = 115;
+        s6Opacity = 0;
+      } else if (p < 0.88) {
+        const norm2 = (p - 0.56) / 0.32;
+        const ease2 = norm2 < 0.5 ? 4 * norm2 * norm2 * norm2 : 1 - Math.pow(-2 * norm2 + 2, 3) / 2;
+        s4Y = -115;
+        s4Opacity = 0;
+        s5Y = -115 * ease2;
+        s5Opacity = Math.max(0, 1 - ease2 * 1.25);
+        s6Y = 115 * (1 - ease2);
+        s6Opacity = Math.min(1, Math.max(0, (ease2 - 0.08) * 1.25));
       } else {
-        norm = (p - 0.18) / 0.64;
+        s4Y = -115;
+        s4Opacity = 0;
+        s5Y = -115;
+        s5Opacity = 0;
+        s6Y = 0;
+        s6Opacity = 1;
       }
 
-      // Smooth cubic easeInOut curve
-      const ease = norm < 0.5 ? 4 * norm * norm * norm : 1 - Math.pow(-2 * norm + 2, 3) / 2;
+      const isStage4Active = p < 0.28;
+      const isStage5Active = p >= 0.28 && p < 0.72;
+      const isStage6Active = p >= 0.72;
 
-      // Stage 4 translates UPWARD: 0vh -> -115vh
-      const s4Y = -115 * ease;
-      const s4Opacity = Math.max(0, 1 - ease * 1.25);
-
-      // Stage 5 translates UPWARD from below: +115vh -> 0vh
-      const s5Y = 115 * (1 - ease);
-      const s5Opacity = Math.min(1, Math.max(0, (ease - 0.08) * 1.25));
-
-      const isStage4Active = p < 0.5;
-
+      // Apply transforms and opacities to Stage 4 layers
       if (stage4LeftRef.current) {
         stage4LeftRef.current.style.transform = `translate3d(0, ${s4Y}vh, 0)`;
         stage4LeftRef.current.style.opacity = `${s4Opacity}`;
         stage4LeftRef.current.style.pointerEvents = isStage4Active ? "auto" : "none";
+        stage4LeftRef.current.style.visibility = s4Opacity > 0.005 ? "visible" : "hidden";
       }
       if (stage4RightRef.current) {
         stage4RightRef.current.style.transform = `translate3d(0, ${s4Y}vh, 0)`;
         stage4RightRef.current.style.opacity = `${s4Opacity}`;
         stage4RightRef.current.style.pointerEvents = isStage4Active ? "auto" : "none";
+        stage4RightRef.current.style.visibility = s4Opacity > 0.005 ? "visible" : "hidden";
       }
+
+      // Apply transforms and opacities to Stage 5 layers
       if (stage5LeftRef.current) {
         stage5LeftRef.current.style.transform = `translate3d(0, ${s5Y}vh, 0)`;
         stage5LeftRef.current.style.opacity = `${s5Opacity}`;
-        stage5LeftRef.current.style.pointerEvents = isStage4Active ? "none" : "auto";
+        stage5LeftRef.current.style.pointerEvents = isStage5Active ? "auto" : "none";
+        stage5LeftRef.current.style.visibility = s5Opacity > 0.005 ? "visible" : "hidden";
       }
       if (stage5RightRef.current) {
         stage5RightRef.current.style.transform = `translate3d(0, ${s5Y}vh, 0)`;
         stage5RightRef.current.style.opacity = `${s5Opacity}`;
-        stage5RightRef.current.style.pointerEvents = isStage4Active ? "none" : "auto";
+        stage5RightRef.current.style.pointerEvents = isStage5Active ? "auto" : "none";
+        stage5RightRef.current.style.visibility = s5Opacity > 0.005 ? "visible" : "hidden";
+      }
+
+      // Apply transforms and opacities to Stage 6 layers
+      if (stage6LeftRef.current) {
+        stage6LeftRef.current.style.transform = `translate3d(0, ${s6Y}vh, 0)`;
+        stage6LeftRef.current.style.opacity = `${s6Opacity}`;
+        stage6LeftRef.current.style.pointerEvents = isStage6Active ? "auto" : "none";
+        stage6LeftRef.current.style.visibility = s6Opacity > 0.005 ? "visible" : "hidden";
+      }
+      if (stage6RightRef.current) {
+        stage6RightRef.current.style.transform = `translate3d(0, ${s6Y}vh, 0)`;
+        stage6RightRef.current.style.opacity = `${s6Opacity}`;
+        stage6RightRef.current.style.pointerEvents = isStage6Active ? "auto" : "none";
+        stage6RightRef.current.style.visibility = s6Opacity > 0.005 ? "visible" : "hidden";
       }
 
       rafId.current = requestAnimationFrame(renderLoop);
@@ -426,7 +484,7 @@ export default function StageFour() {
       style={{
         position: "relative",
         width: "100%",
-        minHeight: "360vh",
+        minHeight: "540vh",
         backgroundColor: "#000000",
         color: "#ffffff",
         zIndex: 20,
@@ -439,6 +497,17 @@ export default function StageFour() {
         style={{
           position: "absolute",
           top: "180vh",
+          height: "180vh",
+          width: "100%",
+          pointerEvents: "none",
+        }}
+      />
+      {/* Stage Six Viewport Anchor */}
+      <div
+        id="stage6"
+        style={{
+          position: "absolute",
+          top: "360vh",
           height: "180vh",
           width: "100%",
           pointerEvents: "none",
@@ -611,9 +680,14 @@ export default function StageFour() {
             </div>
           </div>
 
-          {/* Stage Five Left Layer (Upcoming Project Placeholder) */}
+          {/* Stage Five Left Layer (FloatView) */}
           <div ref={stage5LeftRef} className="project-layer-pane layer-absolute layer-hidden">
             <StageFiveLeftPane />
+          </div>
+
+          {/* Stage Six Left Layer (Ledger Website) */}
+          <div ref={stage6LeftRef} className="project-layer-pane layer-absolute layer-hidden">
+            <StageSixLeftPane />
           </div>
         </div>
 
@@ -721,9 +795,14 @@ export default function StageFour() {
               </div>
               </div>
 
-              {/* Stage Five Right Layer (Upcoming Project Placeholder) */}
+              {/* Stage Five Right Layer (FloatView) */}
               <div ref={stage5RightRef} className="project-layer-pane layer-absolute layer-hidden">
                 <StageFiveRightPane />
+              </div>
+
+              {/* Stage Six Right Layer (Ledger Website) */}
+              <div ref={stage6RightRef} className="project-layer-pane layer-absolute layer-hidden">
+                <StageSixRightPane />
               </div>
             </div>
           </div>
