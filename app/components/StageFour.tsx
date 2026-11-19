@@ -841,31 +841,70 @@ export default function StageFour() {
           align-items: center;
           justify-content: center;
           gap: 7px;
-          color: rgba(255, 255, 255, 0.72);
-          transition: color 0.2s ease, transform 0.2s ease;
+          transition: transform 0.2s ease;
         }
 
         .github-link-text {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           font-size: 13.5px;
-          font-weight: 400;
+          font-weight: 500;
           letter-spacing: 0.01em;
-          color: inherit;
+
+          /* High-Contrast Diagonal Chrome Reflective Sheen Sweep (Matching Scroll To Explore) */
+          background: linear-gradient(
+            115deg,
+            rgba(255, 255, 255, 0.28) 0%,
+            rgba(255, 255, 255, 0.38) 38%,
+            rgba(255, 255, 255, 0.9) 48%,
+            #ffffff 50%,
+            rgba(255, 255, 255, 0.9) 52%,
+            rgba(255, 255, 255, 0.38) 62%,
+            rgba(255, 255, 255, 0.28) 100%
+          );
+          background-size: 250% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          animation: githubDiagonalReflect 2.6s linear infinite;
+          display: inline-block;
+          transition: color 0.2s ease, letter-spacing 0.2s ease;
         }
 
         .github-icon {
-          color: inherit;
+          color: rgba(255, 255, 255, 0.72);
           flex-shrink: 0;
-          transition: transform 0.2s ease;
+          filter: none;
+          transition: transform 0.2s ease, color 0.2s ease;
         }
 
         .github-repo-link:hover {
-          color: #ffffff;
           transform: translateY(-2px);
         }
 
         .github-repo-link:hover .github-icon {
-          transform: scale(1.1);
+          color: #ffffff;
+          filter: none;
+          transform: scale(1.08);
+        }
+
+        .github-repo-link:hover .github-link-text {
+          animation: none;
+          background: none;
+          -webkit-background-clip: unset;
+          background-clip: unset;
+          -webkit-text-fill-color: #ffffff;
+          color: #ffffff;
+          filter: none;
+        }
+
+        @keyframes githubDiagonalReflect {
+          0% {
+            background-position: 200% 0;
+          }
+          100% {
+            background-position: -200% 0;
+          }
         }
 
         /* See More Button Section (Positioned absolutely beneath the 3 phones to guarantee zero vertical offset) */
