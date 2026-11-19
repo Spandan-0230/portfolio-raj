@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 interface ProjectImage {
   id: number;
@@ -96,10 +96,100 @@ const BIOSYNC_IMAGES: ProjectImage[] = [
   },
 ];
 
+// Language / Tech Stack distribution data for BioSync
+interface LanguageItem {
+  id: string;
+  name: string;
+  shortName: string;
+  pct: number;
+  color: string;
+  icon: React.ReactNode;
+}
+
+const LANG_DATA: LanguageItem[] = [
+  {
+    id: "kotlin",
+    name: "Kotlin",
+    shortName: "Kotlin",
+    pct: 98.4,
+    color: "#A97BFF",
+    icon: (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <path d="M24 24H0V0H24L12 12L24 24Z" fill="#7F52FF" />
+        <path d="M0 24L12 12L0 0V24Z" fill="#A855F7" />
+        <path d="M12 12L24 0H0L12 12Z" fill="#C084FC" />
+      </svg>
+    ),
+  },
+  {
+    id: "html",
+    name: "HTML",
+    shortName: "HTML",
+    pct: 1.6,
+    color: "#E34C26",
+    icon: (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="#E34C26">
+        <path d="M3 2l1.6 18.2L12 22l7.4-1.8L21 2H3zm14.8 6.4h-7.6l.2 2.2h7.2l-.6 6.8-4.6 1.3-4.6-1.3-.3-3.7h2.2l.2 1.8 2.5.7 2.5-.7.3-3.2H6.9l-.6-6.4h11.7l-.2 2.2z" />
+      </svg>
+    ),
+  },
+];
+
+// Helper functions for Donut Chart geometry
+function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+  return {
+    x: centerX + radius * Math.cos(angleInRadians),
+    y: centerY + radius * Math.sin(angleInRadians),
+  };
+}
+
+function describeDonutSegment(
+  x: number,
+  y: number,
+  innerRadius: number,
+  outerRadius: number,
+  startAngle: number,
+  endAngle: number
+) {
+  const startOuter = polarToCartesian(x, y, outerRadius, endAngle);
+  const endOuter = polarToCartesian(x, y, outerRadius, startAngle);
+  const startInner = polarToCartesian(x, y, innerRadius, endAngle);
+  const endInner = polarToCartesian(x, y, innerRadius, startAngle);
+
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  return [
+    `M ${startOuter.x.toFixed(2)} ${startOuter.y.toFixed(2)}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 0 ${endOuter.x.toFixed(2)} ${endOuter.y.toFixed(2)}`,
+    `L ${endInner.x.toFixed(2)} ${endInner.y.toFixed(2)}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 1 ${startInner.x.toFixed(2)} ${startInner.y.toFixed(2)}`,
+    "Z",
+  ].join(" ");
+}
+
 export default function StageFour() {
   const trackRef = useRef<HTMLDivElement>(null);
 
+  // Active hovered language index for Donut Chart
+  const [activeLang, setActiveLang] = useState<number | null>(null);
 
+  // Precomputed start and end angles for donut slices
+  const donutSlices = useMemo(() => {
+    let currentAngle = 0;
+    const gap = 1.4; // Subtle gap between slices for sleek segmentation
+    return LANG_DATA.map((item) => {
+      const sweep = (item.pct / 100) * 360;
+      const startAngle = currentAngle + gap / 2;
+      const endAngle = currentAngle + sweep - gap / 2;
+      currentAngle += sweep;
+      return {
+        ...item,
+        startAngle,
+        endAngle,
+      };
+    });
+  }, []);
 
   // Lightbox Modal Zoom States
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -195,11 +285,17 @@ export default function StageFour() {
     setIsDragging(false);
   };
 
-  // The 3 prominent featured portrait screenshots for the top row
-  const featuredImages = [BIOSYNC_IMAGES[0], BIOSYNC_IMAGES[1], BIOSYNC_IMAGES[2]];
+  // The 3 prominent featured portrait screenshots for the top row (1.png, 2.png, 5.png)
+  const featuredImages = [
+    BIOSYNC_IMAGES[0], // 1.png
+    BIOSYNC_IMAGES[1], // 2.png
+    BIOSYNC_IMAGES[4], // 5.png
+  ];
 
-  // The full set of 8 images for the bottom floating thumbnails
-  const thumbnailImages = BIOSYNC_IMAGES;
+  // Remaining images reserved for "See more" (3.png, 4.png, 6.png, 7.png, 8.png)
+  const remainingImages = BIOSYNC_IMAGES.filter(
+    (img) => img.filename !== "1.png" && img.filename !== "2.png" && img.filename !== "5.png"
+  );
 
   return (
     <section
@@ -229,7 +325,7 @@ export default function StageFour() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "0 clamp(44px, 7vw, 104px)",
+          padding: "clamp(24px, 3.8vh, 48px) var(--page-frame-padding, clamp(68px, 8.5vw, 134px)) 0",
           boxSizing: "border-box",
         }}
       >
@@ -303,44 +399,56 @@ export default function StageFour() {
               ------------------------------------------------------------- */}
           <div className="showcase-left-pane">
             <div className="portrait-showcase-container">
-              {/* Top Row: 3 Tall Portrait Smartphone Blocks (Prominent height & width, matching reference) */}
+              {/* 3 Tall Portrait Smartphone Blocks (1.png, 2.png, 5.png) */}
               <div className="portrait-top-row">
-                {featuredImages.map((img, idx) => (
-                  <div
-                    key={img.id}
-                    className="portrait-device-card"
-                    onClick={() => openModal(idx)}
-                    title={`Click to zoom: ${img.title}`}
-                  >
-                    <div className="device-screen-inner">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={img.src}
-                        alt={img.title}
-                        className="device-img"
-                      />
+                {featuredImages.map((img) => {
+                  const globalIdx = BIOSYNC_IMAGES.findIndex((b) => b.id === img.id);
+                  return (
+                    <div
+                      key={img.id}
+                      className="portrait-device-card"
+                      onClick={() => openModal(globalIdx)}
+                      title={`Click to zoom: ${img.title}`}
+                    >
+                      <div className="device-screen-inner">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img.src}
+                          alt={img.title}
+                          className="device-img"
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Bottom Row: 8 Floating Screenshots (Zero cards, natural size, floating aesthetic) */}
-              <div className="floating-thumbs-grid">
-                {thumbnailImages.map((img, idx) => (
-                  <div
-                    key={img.id}
-                    onClick={() => openModal(idx)}
-                    className="floating-thumb-item"
-                    title={`Click to zoom: ${img.title}`}
+              {/* See More Action (Matching provided UI: text + down chevron) */}
+              <div className="see-more-container">
+                <button
+                  type="button"
+                  className="see-more-btn"
+                  title="See more BioSync screenshots"
+                >
+                  <span className="see-more-text">See more</span>
+                  <svg
+                    className="see-more-icon"
+                    width="14"
+                    height="9"
+                    viewBox="0 0 14 9"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.src}
-                      alt={img.title}
-                      className="floating-thumb-img"
+                    <path
+                      d="M1.5 1.5L7 7L12.5 1.5"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
-                  </div>
-                ))}
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -351,10 +459,89 @@ export default function StageFour() {
           <div className="center-divider" aria-hidden="true" />
 
           {/* -------------------------------------------------------------
-              RIGHT: Project Title ("BioSync" only, in white italic serif)
+              RIGHT: Project Title, Description & Language Distribution Stats
               ------------------------------------------------------------- */}
           <div className="showcase-right-pane">
-            <h1 className="project-title-italic">BioSync</h1>
+            <div className="project-header-group">
+              <h1 className="project-title-italic">BioSync</h1>
+              <div className="project-desc-text">
+                <br></br>
+                Offline-first Android fitness &amp; nutrient tracker in Kotlin &amp; Jetpack Compose. Features daily macro/hydration/step logging, historical stats &amp; streaks, interactive home widgets, persistent custom notifications, and live background step sync in a true-black OLED UI.
+                <br></br>
+                <br></br>
+                <ul className="feature-list" style={{ paddingLeft: "60px" }}>
+                  <li>🧬 Multi-Stage Biometric Onboarding &amp; Calibration</li>
+                  <li>📊 Live Telemetry Dashboard &amp; Quick-Action Logging</li>
+                  <li>📱 Custom Android Home Screen Widget</li>
+                  <li>📳 Smart Notifications &amp; Local-First Storage</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Circular Stats & Language Distribution Breakdown */}
+            <div className="stats-showcase-box">
+              {/* Circular Donut Chart */}
+              <div className="donut-chart-wrapper">
+                <svg width="124" height="124" viewBox="0 0 100 100" className="donut-svg">
+                  {donutSlices.map((slice, idx) => {
+                    const isHovered = activeLang === idx;
+                    return (
+                      <path
+                        key={slice.id}
+                        d={describeDonutSegment(
+                          50,
+                          50,
+                          isHovered ? 29 : 31,
+                          isHovered ? 47 : 44,
+                          slice.startAngle,
+                          slice.endAngle
+                        )}
+                        fill={slice.color}
+                        className={`donut-path ${isHovered ? "active-slice" : ""}`}
+                        onMouseEnter={() => setActiveLang(idx)}
+                        onMouseLeave={() => setActiveLang(null)}
+                      />
+                    );
+                  })}
+                </svg>
+
+                {/* Donut Center Info */}
+                <div className="donut-center-info">
+                  {activeLang !== null ? (
+                    <>
+                      <span className="donut-center-val" style={{ color: LANG_DATA[activeLang].color }}>
+                        {LANG_DATA[activeLang].pct}%
+                      </span>
+                      <span className="donut-center-label">{LANG_DATA[activeLang].shortName}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="donut-center-val">100%</span>
+                      <span className="donut-center-label">Stack</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Languages List: Kotlin 98.4%, HTML 1.6% (without dots, just icon + name + %) */}
+              <div className="lang-list-container">
+                {LANG_DATA.map((item, idx) => {
+                  const isHovered = activeLang === idx;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`lang-item-row ${isHovered ? "active-row" : ""}`}
+                      onMouseEnter={() => setActiveLang(idx)}
+                      onMouseLeave={() => setActiveLang(null)}
+                    >
+                      <span className="lang-icon-wrapper">{item.icon}</span>
+                      <span className="lang-name-text">{item.name}</span>
+                      <span className="lang-pct-text">{item.pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -486,50 +673,50 @@ export default function StageFour() {
           z-index: 10;
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: center;
           width: 100%;
-          max-width: 1360px;
-          gap: clamp(24px, 3.5vw, 48px);
+          max-width: 1160px;
+          gap: clamp(24px, 2.6vw, 42px);
           box-sizing: border-box;
+          margin-top: clamp(6px, 1.5vh, 18px);
         }
 
         /* -------------------------------------------------------------
            LEFT COLUMN: Photo Showcase
            ------------------------------------------------------------- */
         .showcase-left-pane {
-          flex: 1.35;
-          max-width: 760px;
+          flex: 0 0 auto;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
+          position: relative;
         }
 
         /* Portrait View Layout */
         .portrait-showcase-container {
+          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: clamp(16px, 2.4vh, 26px);
-          width: 100%;
+          justify-content: center;
         }
 
-        /* Top Row: 3 Tall Portrait Smartphone Blocks (Significantly increased height & width) */
+        /* Top Row: 3 Tall Portrait Smartphone Blocks (Dead-center aligned to the center-divider line) */
         .portrait-top-row {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: clamp(14px, 1.8vw, 24px);
-          width: 100%;
+          gap: clamp(12px, 1.4vw, 18px);
         }
 
         .portrait-device-card {
           position: relative;
-          height: clamp(380px, 49vh, 480px);
+          height: clamp(370px, min(48vh, 27vw), 470px);
           aspect-ratio: 540 / 1155;
           background: #000000;
           border: 1.5px solid rgba(255, 255, 255, 0.25);
-          border-radius: 26px;
+          border-radius: 24px;
           overflow: hidden;
           cursor: pointer;
           box-shadow: 0 18px 48px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
@@ -565,61 +752,64 @@ export default function StageFour() {
           display: block;
         }
 
-        /* Bottom Row: 8 Floating Screenshots (Zero cards, natural size, floating aesthetic) */
-        .floating-thumbs-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: clamp(10px, 1.4vh, 16px) clamp(12px, 1.8vw, 22px);
-          width: 100%;
-          max-width: 720px;
-          justify-items: center;
-          align-items: center;
-        }
-
-        .floating-thumb-item {
+        /* See More Button Section (Positioned absolutely beneath the 3 phones to guarantee zero vertical offset) */
+        .see-more-container {
+          position: absolute;
+          top: calc(100% + 10px);
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
+          z-index: 5;
+        }
+
+        .see-more-btn {
           background: transparent;
           border: none;
-          padding: 0;
-          transition: transform 0.25s ease;
+          padding: 6px 14px;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          color: rgba(255, 255, 255, 0.72);
+          transition: color 0.2s ease, transform 0.2s ease;
         }
 
-        .floating-thumb-item:hover {
-          transform: translateY(-4px) scale(1.06);
+        .see-more-text {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: 13.5px;
+          font-weight: 400;
+          letter-spacing: 0.01em;
+          color: inherit;
         }
 
-        .floating-thumb-img {
-          height: clamp(65px, 8.5vh, 85px);
-          width: auto;
-          max-width: 100%;
-          object-fit: contain;
-          display: block;
-          border-radius: 9px;
-          border: 1.2px solid rgba(255, 255, 255, 0.22);
-          background: #000000;
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
-          transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+        .see-more-icon {
+          color: inherit;
+          transition: transform 0.2s ease;
         }
 
-        .floating-thumb-item:hover .floating-thumb-img {
-          border-color: rgba(255, 255, 255, 0.7);
-          box-shadow: 0 14px 32px rgba(0, 0, 0, 0.95), 0 0 14px rgba(255, 255, 255, 0.25);
+        .see-more-btn:hover {
+          color: #ffffff;
+        }
+
+        .see-more-btn:hover .see-more-icon {
+          transform: translateY(2px);
         }
 
         /* -------------------------------------------------------------
-           CENTER: Sleek Vertical Divider "|"
+           CENTER: Sleek Vertical Divider "|" Framing & Matching the 3 Phones
            ------------------------------------------------------------- */
         .center-divider {
           width: 1.5px;
-          height: clamp(420px, 56vh, 540px);
+          height: clamp(390px, min(50vh, 29vw), 490px);
           background: linear-gradient(
             180deg,
             transparent 0%,
-            rgba(255, 255, 255, 0.3) 15%,
-            rgba(255, 255, 255, 0.3) 85%,
+            rgba(255, 255, 255, 0.42) 2.5%,
+            rgba(255, 255, 255, 0.42) 97.5%,
             transparent 100%
           );
           border-radius: 1px;
@@ -627,27 +817,196 @@ export default function StageFour() {
         }
 
         /* -------------------------------------------------------------
-           RIGHT COLUMN: Project Title ("BioSync" only)
+           RIGHT COLUMN: Project Title, Description & Language Distribution
            ------------------------------------------------------------- */
         .showcase-right-pane {
-          flex: 0.9;
+          flex: 0 0 auto;
+          width: clamp(310px, 26vw, 400px);
+          max-width: 400px;
+          height: clamp(390px, min(50vh, 29vw), 490px);
           display: flex;
-          align-items: center;
-          justify-content: flex-start;
-          padding-left: clamp(20px, 3vw, 50px);
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: space-between;
+          padding: 0;
+          margin: 0;
+          box-sizing: border-box;
         }
 
-        /* Title: BioSync in high-contrast italic serif font matching reference image */
+        .project-header-group {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: clamp(8px, 1.3vh, 14px);
+          width: 100%;
+        }
+
+        /* Title: BioSync in high-contrast italic serif font */
         .project-title-italic {
           margin: 0;
+          padding: 0;
           font-family: 'Playfair Display', 'Cormorant Garamond', 'Baskerville', 'Georgia', serif;
           font-style: italic;
-          font-size: clamp(3.8rem, 6.2vw, 6rem);
+          font-size: clamp(3rem, 4.4vw, 4.2rem);
           font-weight: 600;
           color: #ffffff;
           letter-spacing: -0.015em;
-          line-height: 1.05;
+          line-height: 0.92;
           filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.95));
+          text-align: left;
+          margin-top: -0.46em;
+        }
+
+        .project-desc-text {
+          margin: 0;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+          font-size: clamp(12.5px, 0.92vw, 14px);
+          line-height: 1.64;
+          color: rgba(255, 255, 255, 0.74);
+          max-width: 390px;
+          letter-spacing: -0.005em;
+          text-align: left;
+        }
+
+        /* Bottom Section: Circular Donut Stats & 2-Column Tech Stack */
+        .stats-showcase-box {
+          display: flex;
+          align-items: center;
+          gap: clamp(14px, 1.8vw, 20px);
+          width: 100%;
+          max-width: 390px;
+          padding: 0;
+          margin: 0;
+        }
+
+        /* Donut Chart */
+        .donut-chart-wrapper {
+          position: relative;
+          width: 108px;
+          height: 108px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .donut-svg {
+          width: 100%;
+          height: 100%;
+          overflow: visible;
+        }
+
+        .donut-path {
+          transition: all 0.22s ease-out;
+          cursor: pointer;
+          stroke: transparent;
+          stroke-width: 4px;
+          paint-order: stroke fill;
+        }
+
+        .donut-path:hover,
+        .donut-path.active-slice {
+          filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+        }
+
+        .donut-center-info {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          text-align: center;
+          padding: 0 4px;
+        }
+
+        .donut-center-val {
+          font-family: ui-monospace, SFMono-Regular, monospace;
+          font-size: 15px;
+          font-weight: 700;
+          color: #ffffff;
+          line-height: 1.1;
+          letter-spacing: -0.02em;
+        }
+
+        .donut-center-label {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: 10px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.65);
+          line-height: 1.2;
+          margin-top: 2px;
+          max-width: 56px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* Languages Breakdown List */
+        .lang-list-container {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          min-width: 165px;
+        }
+
+        .lang-item-row {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 6px 11px;
+          border-radius: 7px;
+          background: rgba(255, 255, 255, 0.025);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          user-select: none;
+        }
+
+        .lang-item-row:hover,
+        .lang-item-row.active-row {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.14);
+          transform: translateX(3px);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+
+        .lang-icon-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 18px;
+          height: 18px;
+          flex-shrink: 0;
+        }
+
+        .lang-name-text {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: 13px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.85);
+          white-space: nowrap;
+          letter-spacing: -0.01em;
+        }
+
+        .lang-pct-text {
+          font-family: ui-monospace, SFMono-Regular, monospace;
+          font-size: 12.5px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.45);
+          margin-left: auto;
+          padding-left: 12px;
+        }
+
+        .lang-item-row:hover .lang-name-text,
+        .lang-item-row.active-row .lang-name-text {
+          color: #ffffff;
+        }
+
+        .lang-item-row:hover .lang-pct-text,
+        .lang-item-row.active-row .lang-pct-text {
+          color: #ffffff;
         }
 
         /* -------------------------------------------------------------
@@ -839,6 +1198,14 @@ export default function StageFour() {
           .showcase-right-pane {
             max-width: 100%;
             width: 100%;
+            height: auto;
+            min-height: auto;
+            gap: 28px;
+            padding: 0 16px;
+          }
+
+          .project-title-italic {
+            margin-top: 0;
           }
         }
       `}</style>

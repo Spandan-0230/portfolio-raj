@@ -139,7 +139,7 @@ export default function WorksShowcase() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "0 clamp(38px, 6.5vw, 96px)",
+          padding: "0 var(--page-frame-padding, clamp(64px, 8.3vw, 134px))",
           boxSizing: "border-box",
         }}
       >
@@ -219,7 +219,7 @@ export default function WorksShowcase() {
             alignItems: "center",
             justifyContent: "center",
             textAlign: "center",
-            maxWidth: "1350px",
+            maxWidth: "min(1160px, 100%)",
             width: "100%",
             boxSizing: "border-box",
             pointerEvents: "none",
@@ -231,17 +231,17 @@ export default function WorksShowcase() {
         >
           {/* Main Title: MY WORKS */}
           <h2 className="works-main-title">
-            MY WORKS
+            MY Workshop
           </h2>
 
           {/* Subtitle 1: CRAFTING DIGITAL EXPERIENCES */}
           <p className="works-sub-upper">
-            CRAFTING DIGITAL EXPERIENCES
+            SOLVING COMPLEX PROBLEMS
           </p>
 
           {/* Subtitle 2: with passion & code. */}
           <p className="works-sub-italic">
-            with passion &amp; code.
+            with data &amp; soul.
           </p>
         </div>
 
@@ -263,9 +263,9 @@ export default function WorksShowcase() {
         .works-main-title {
           margin: 0;
           font-family: 'WorksOutfit', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          font-size: clamp(3.8rem, 13vw, 11.5rem);
+          font-size: clamp(3rem, 8.5vw, 6.2rem);
           font-weight: 900;
-          letter-spacing: -0.035em;
+          letter-spacing: -0.03em;
           line-height: 0.95;
           text-transform: uppercase;
           text-align: center;
@@ -277,11 +277,11 @@ export default function WorksShowcase() {
 
         .works-sub-upper {
           margin: 0;
-          margin-top: clamp(22px, 3.4vh, 38px);
+          margin-top: clamp(18px, 2.8vh, 32px);
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-          font-size: clamp(10.5px, 1.25vw, 15px);
+          font-size: clamp(10px, 1.1vw, 13.5px);
           font-weight: 600;
-          letter-spacing: clamp(0.34em, 0.46vw, 0.52em);
+          letter-spacing: clamp(0.26em, 0.38vw, 0.42em);
           text-transform: uppercase;
           color: #8c92a0;
           text-align: center;
@@ -294,7 +294,7 @@ export default function WorksShowcase() {
           font-family: 'Playfair Display', 'Cormorant Garamond', 'Baskerville', 'Georgia', serif;
           font-style: italic;
           font-weight: 600;
-          font-size: clamp(2rem, 4.3vw, 3.8rem);
+          font-size: clamp(1.8rem, 3.5vw, 3.2rem);
           color: #ffffff;
           letter-spacing: 0.01em;
           line-height: 1.18;

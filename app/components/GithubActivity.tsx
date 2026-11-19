@@ -394,7 +394,7 @@ export default function GithubActivity() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "0 clamp(38px, 6.5vw, 96px)",
+          padding: "clamp(20px, 3vh, 36px) var(--page-frame-padding, clamp(64px, 8.3vw, 134px))",
           boxSizing: "border-box",
         }}
       >
@@ -420,7 +420,7 @@ export default function GithubActivity() {
         <div
           className="activity-wrapper"
           style={{
-            maxWidth: "1160px",
+            maxWidth: "1120px",
             width: "100%",
             display: "flex",
             flexDirection: "column",
@@ -816,23 +816,23 @@ export default function GithubActivity() {
           width: 100%;
           border-radius: 31px;
           background: transparent;
-          padding: 34px 38px;
+          padding: clamp(24px, 3vh, 32px) clamp(24px, 2.4vw, 36px);
           box-sizing: border-box;
           display: flex;
           align-items: stretch;
-          gap: 36px;
+          gap: clamp(20px, 2.2vw, 34px);
         }
 
         /* -----------------------------------------------------------------
            LEFT COLUMN: Profile & Bio & Actions
            ----------------------------------------------------------------- */
         .card-left-column {
-          width: 248px;
+          width: clamp(210px, 18vw, 248px);
           flex-shrink: 0;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          padding-right: 28px;
+          padding-right: clamp(16px, 1.8vw, 26px);
           border-right: 1px solid rgba(255, 255, 255, 0.08);
           gap: 20px;
         }

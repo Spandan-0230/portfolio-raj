@@ -146,7 +146,7 @@ export default function Header() {
           z-index: 50;
           display: flex;
           align-items: center;
-          padding: 0 clamp(44px, 7vw, 104px);
+          padding: 0 var(--page-frame-padding, clamp(64px, 8.3vw, 134px));
           background: transparent;
           backdrop-filter: none;
           -webkit-backdrop-filter: none;
