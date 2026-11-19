@@ -416,6 +416,33 @@ export default function StageFour() {
               ------------------------------------------------------------- */}
           <div className="showcase-left-pane">
             <div className="portrait-showcase-container">
+              {/* GitHub Repo Button (Positioned just above the middle phone) */}
+              <div className="github-link-container">
+                <a
+                  href="https://github.com/Spandan-0230/BioSync"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="github-repo-link"
+                  title="Open GitHub/Spandan-0230/BioSync"
+                >
+                  <svg
+                    className="github-icon"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                    />
+                  </svg>
+                  <span className="github-link-text">GitHub/BioSync</span>
+                </a>
+              </div>
+
               {/* 3 Tall Portrait Smartphone Blocks (1.png, 2.png, 5.png) */}
               <div className="portrait-top-row">
                 {featuredImages.map((img) => {
@@ -480,12 +507,13 @@ export default function StageFour() {
               ------------------------------------------------------------- */}
           <div className="showcase-right-pane">
             <div className="project-header-group">
-              <h1 className="project-title-italic">BioSync</h1>
+              <h1 className="project-title-italic">
+                Bio<span className="neon-sync-text">Sync</span>
+              </h1>
               <div className="project-desc-text">
                 <br></br>
-                Offline-first Android fitness &amp; nutrient tracker in Kotlin &amp; Jetpack Compose. Features daily macro/hydration/step logging, historical stats &amp; streaks, interactive home widgets, persistent custom notifications, and live background step sync in a true-black OLED UI.
-                <br></br>
-                <br></br>
+                Offline-first Android fitness &amp; nutrient tracker in Kotlin &amp;  Features daily macro/hydration/step logging, historical stats &amp; streaks, interactive home widgets, persistent custom notifications, and live background step sync in a true-black OLED UI.
+
                 <ul className="feature-list">
                   <li className="feature-item">
                     <FeatureBulletIcon />
@@ -790,6 +818,56 @@ export default function StageFour() {
           display: block;
         }
 
+        /* GitHub Repo Link (Positioned absolutely above the middle phone) */
+        .github-link-container {
+          position: absolute;
+          bottom: calc(100% + 10px);
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 5;
+          white-space: nowrap;
+        }
+
+        .github-repo-link {
+          text-decoration: none;
+          background: transparent;
+          border: none;
+          padding: 6px 14px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          color: rgba(255, 255, 255, 0.72);
+          transition: color 0.2s ease, transform 0.2s ease;
+        }
+
+        .github-link-text {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: 13.5px;
+          font-weight: 400;
+          letter-spacing: 0.01em;
+          color: inherit;
+        }
+
+        .github-icon {
+          color: inherit;
+          flex-shrink: 0;
+          transition: transform 0.2s ease;
+        }
+
+        .github-repo-link:hover {
+          color: #ffffff;
+          transform: translateY(-2px);
+        }
+
+        .github-repo-link:hover .github-icon {
+          transform: scale(1.1);
+        }
+
         /* See More Button Section (Positioned absolutely beneath the 3 phones to guarantee zero vertical offset) */
         .see-more-container {
           position: absolute;
@@ -889,10 +967,50 @@ export default function StageFour() {
           font-weight: 600;
           color: #ffffff;
           letter-spacing: -0.015em;
-          line-height: 0.92;
+          line-height: 1.2;
           filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.95));
           text-align: left;
-          margin-top: -0.46em;
+          margin-top: -0.86em;
+        }
+
+        /* Dynamic neon shifting color effect for "Sync" */
+        .neon-sync-text {
+          background: linear-gradient(
+            90deg,
+            #3845f3 0%,
+            #8a29c1 16%,
+            #f824bb 33%,
+            #fa7532 50%,
+            #f824bb 67%,
+            #8a29c1 84%,
+            #3845f3 100%
+          );
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          display: inline-block;
+          padding-right: 0.05em;
+          animation: neonSyncShift 6s linear infinite;
+        }
+
+        @keyframes neonSyncShift {
+          0% {
+            background-position: 0% center;
+            filter: drop-shadow(0 0 14px rgba(56, 69, 243, 0.45));
+          }
+          33% {
+            background-position: 66% center;
+            filter: drop-shadow(0 0 16px rgba(248, 36, 187, 0.5));
+          }
+          66% {
+            background-position: 133% center;
+            filter: drop-shadow(0 0 16px rgba(250, 117, 50, 0.5));
+          }
+          100% {
+            background-position: 200% center;
+            filter: drop-shadow(0 0 14px rgba(56, 69, 243, 0.45));
+          }
         }
 
         .project-desc-text {
@@ -909,7 +1027,7 @@ export default function StageFour() {
         /* Feature List with custom 4-triangle cross bullets */
         .feature-list {
           list-style: none;
-          margin: 0;
+          margin-top: 20px;
           padding: 0 0 0 clamp(2px, 3.2vw, 10px);
           display: flex;
           flex-direction: column;
@@ -1031,10 +1149,9 @@ export default function StageFour() {
           display: flex;
           align-items: center;
           gap: 9px;
-          padding: 6px 11px;
-          border-radius: 7px;
-          background: rgba(255, 255, 255, 0.025);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 4px 0;
+          background: transparent;
+          border: none;
           cursor: pointer;
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           user-select: none;
@@ -1042,10 +1159,8 @@ export default function StageFour() {
 
         .lang-item-row:hover,
         .lang-item-row.active-row {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.14);
+          background: transparent;
           transform: translateX(3px);
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
         }
 
         .lang-icon-wrapper {
