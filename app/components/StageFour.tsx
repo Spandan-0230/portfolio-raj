@@ -298,7 +298,7 @@ export default function StageFour() {
     const renderLoop = () => {
       const diff = targetProgress.current - currentProgress.current;
       if (Math.abs(diff) > 0.0001) {
-        currentProgress.current += diff * 0.12;
+        currentProgress.current += diff * 0.18;
       } else {
         currentProgress.current = targetProgress.current;
       }
@@ -774,24 +774,42 @@ export default function StageFour() {
                           </div>
                         </div>
 
-                        {/* Languages List: Kotlin 98.4%, HTML 1.6% (without dots, just icon + name + %) */}
-                        <div className="lang-list-container">
-                          {LANG_DATA.map((item, idx) => {
-                            const isHovered = activeLang === idx;
-                            return (
-                      <div
-                        key={item.id}
-                        className={`lang-item-row ${isHovered ? "active-row" : ""}`}
-                        onMouseEnter={() => setActiveLang(idx)}
-                        onMouseLeave={() => setActiveLang(null)}
-                              >
-                        <span className="lang-icon-wrapper">{item.icon}</span>
-                        <span className="lang-name-text">{item.name}</span>
-                        <span className="lang-pct-text">{item.pct}%</span>
-                      </div>
-                        );
-                  })}
-                      </div>
+                        {/* Languages Section: GitHub-Style Progress Bar + Languages Row */}
+                        <div className="project-lang-section">
+                          {/* GitHub-style multi-color progress bar */}
+                          <div className="project-lang-progress-bar">
+                            {LANG_DATA.map((item) => (
+                              <div
+                                key={item.id}
+                                style={{
+                                  width: `${item.pct}%`,
+                                  backgroundColor: item.color,
+                                  height: "100%",
+                                }}
+                                title={`${item.name} ${item.pct}%`}
+                              />
+                            ))}
+                          </div>
+
+                          {/* Languages Row: Kotlin 98.4%, HTML 1.6% */}
+                          <div className="project-lang-row">
+                            {LANG_DATA.map((item, idx) => {
+                              const isHovered = activeLang === idx;
+                              return (
+                                <div
+                                  key={item.id}
+                                  className={`project-lang-item ${isHovered ? "active-item" : ""}`}
+                                  onMouseEnter={() => setActiveLang(idx)}
+                                  onMouseLeave={() => setActiveLang(null)}
+                                >
+                                  <span className="lang-icon-wrapper">{item.icon}</span>
+                                  <span className="lang-name-text">{item.name}</span>
+                                  <span className="lang-pct-text">{item.pct}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
               </div>
               </div>
 
@@ -1335,13 +1353,13 @@ export default function StageFour() {
           flex: 1;
         }
 
-        /* Bottom Section: Circular Donut Stats & 2-Column Tech Stack */
+        /* Bottom Section: Circular Donut Stats & Language Distribution */
         .stats-showcase-box {
           display: flex;
           align-items: center;
-          gap: clamp(14px, 1.8vw, 20px);
+          gap: clamp(14px, 1.8vw, 22px);
           width: 100%;
-          max-width: 390px;
+          max-width: 520px;
           padding: 0;
           margin: 0;
         }
@@ -1349,8 +1367,8 @@ export default function StageFour() {
         /* Donut Chart */
         .donut-chart-wrapper {
           position: relative;
-          width: 108px;
-          height: 108px;
+          width: 104px;
+          height: 104px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1410,29 +1428,46 @@ export default function StageFour() {
           white-space: nowrap;
         }
 
-        /* Languages Breakdown List */
-        .lang-list-container {
+        /* Languages Section: GitHub-Style Progress Bar + Languages Row */
+        .project-lang-section {
           display: flex;
           flex-direction: column;
-          gap: 6px;
-          min-width: 165px;
+          gap: 10px;
+          flex: 1;
+          min-width: 0;
         }
 
-        .lang-item-row {
+        .project-lang-progress-bar {
+          display: flex;
+          width: 100%;
+          max-width: 320px;
+          height: 7px;
+          border-radius: 999px;
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.08);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        }
+
+        .project-lang-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: clamp(14px, 2vw, 24px);
+          width: 100%;
+        }
+
+        .project-lang-item {
           display: flex;
           align-items: center;
-          gap: 9px;
-          padding: 4px 0;
-          background: transparent;
-          border: none;
+          gap: 8px;
           cursor: pointer;
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           user-select: none;
+          white-space: nowrap;
         }
 
-        .lang-item-row:hover,
-        .lang-item-row.active-row {
-          background: transparent;
+        .project-lang-item:hover,
+        .project-lang-item.active-item {
           transform: translateX(3px);
         }
 
@@ -1440,6 +1475,41 @@ export default function StageFour() {
           display: flex;
           align-items: center;
           justify-content: center;
+          width: 18px;
+          height: 18px;
+          flex-shrink: 0;
+        }
+
+        .lang-name-text {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: 13px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.85);
+          white-space: nowrap;
+          letter-spacing: -0.01em;
+          transition: color 0.18s ease;
+        }
+
+        .lang-pct-text {
+          font-family: ui-monospace, SFMono-Regular, monospace;
+          font-size: 12.5px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.45);
+          margin-left: auto;
+          padding-left: 8px;
+          transition: color 0.18s ease;
+        }
+
+        .project-lang-item:hover .lang-name-text,
+        .project-lang-item.active-item .lang-name-text {
+          color: #ffffff;
+        }
+
+        .project-lang-item:hover .lang-pct-text,
+        .project-lang-item.active-item .lang-pct-text {
+          color: #ffffff;
+          font-weight: 700;
+        }
           width: 18px;
           height: 18px;
           flex-shrink: 0;

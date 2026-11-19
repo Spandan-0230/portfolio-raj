@@ -127,18 +127,29 @@ export default function SmoothScrollDamper() {
       const scrollY = window.scrollY;
 
       // Detection of fast acceleration: rapid wheel flick or high-velocity spin
-      const isFastAcceleration = Math.abs(deltaY) > 55 || velocity > 0.85;
+      const isFastAcceleration = Math.abs(deltaY) > 65 || velocity > 1.0;
+
+      // CRITICAL: Normal/gentle scrolling is 100% untouched native scrolling.
+      // NEVER call preventDefault or interfere with normal reading/browsing.
+      // This eliminates all stickiness, sluggishness, and artificial lag.
+      if (!isFastAcceleration) {
+        if (latchState.current.checkpointId) {
+          latchState.current.checkpointId = null;
+        }
+        return;
+      }
 
       const pages = getPages();
       if (pages.length === 0) return;
       const checkpoints = getPageCheckpoints(pages);
 
       // =======================================================================
-      // 1. UNIVERSAL LANDING LATCH (START & END OF EACH PAGE - FAST & SLOW)
-      // Every page boundary cleanly catches and lands the user, absorbing 1-3 ticks
-      // with tactile haptic feedback so content is absorbed before moving forward.
+      // FAST-ACCELERATION BOUNDARY LATCH (START & END OF EACH PAGE)
+      // Only engages on fast acceleration to catch the user so they do not skip
+      // entire pages on aggressive flick/spin. Absorbs 1-2 extra rapid ticks
+      // (~180ms) with tactile haptic feedback, then releases immediately.
       // =======================================================================
-      const ZONE_THRESHOLD = isFastAcceleration ? 135 : 65;
+      const ZONE_THRESHOLD = 110;
 
       for (const cp of checkpoints) {
         const dist = cp.top - scrollY;
@@ -149,25 +160,25 @@ export default function SmoothScrollDamper() {
           (deltaY < 0 && dist < 25 && dist > -ZONE_THRESHOLD);   // Scrolling up towards boundary
 
         if (isApproaching) {
-          // Already latched at this boundary: count ticks and hold
+          // Already latched at this boundary: count ticks and hold for 1-2 rapid ticks
           if (latchState.current.checkpointId === cp.id) {
             latchState.current.ticks++;
             const elapsed = now - latchState.current.startTime;
-            const maxTicks = isFastAcceleration ? 3 : 2;
-            const maxDuration = isFastAcceleration ? 360 : 260;
+            const maxTicks = 2; // "cost 1-3 extra scrolls"
+            const maxDuration = 180; // "stop for a milli or a sec" (~180ms)
 
             if (latchState.current.ticks <= maxTicks && elapsed < maxDuration) {
               e.preventDefault();
-              window.scrollTo({ top: cp.top, behavior: "smooth" });
+              window.scrollTo({ top: cp.top, behavior: "instant" as ScrollBehavior });
               return;
             } else {
-              // Latch satisfied & released! Smooth scroll resumes into page
+              // Latch satisfied & released! Smooth scroll resumes immediately into page
               latchState.current.passedCheckpointId = cp.id;
               latchState.current.checkpointId = null;
               return;
             }
           } else if (latchState.current.passedCheckpointId !== cp.id) {
-            // New page boundary encountered: ENGAGE LANDING LATCH!
+            // New page boundary encountered on fast acceleration: ENGAGE LANDING LATCH!
             e.preventDefault();
             latchState.current = {
               checkpointId: cp.id,
@@ -177,62 +188,8 @@ export default function SmoothScrollDamper() {
             };
 
             triggerHaptic();
-            window.scrollTo({ top: cp.top, behavior: "smooth" });
+            window.scrollTo({ top: cp.top, behavior: "instant" as ScrollBehavior });
             return;
-          }
-        }
-      }
-
-      // =======================================================================
-      // 2. INTER-PAGE KINETIC BRIDGES (SPEED ADJUSTMENT BETWEEN PAGE END & NEXT START)
-      // Smoothly boosts slow scroll across the transition gap between any two pages
-      // so users never feel stranded or take dozens of clicks to reach the next page.
-      // =======================================================================
-      if (!isFastAcceleration) {
-        for (let i = 0; i < pages.length - 1; i++) {
-          const currPage = pages[i];
-          const nextPage = pages[i + 1];
-
-          // Forward Transition: between currPage.end and nextPage.start
-          if (deltaY > 0) {
-            const gapStart = currPage.end - 40;
-            const gapEnd = nextPage.start;
-
-            if (scrollY >= gapStart && scrollY < gapEnd) {
-              e.preventDefault();
-
-              // Close approach: smoothly glide straight onto the next page start
-              if (scrollY >= nextPage.start - 140) {
-                window.scrollTo({ top: nextPage.start, behavior: "smooth" });
-                triggerHaptic();
-              } else {
-                // Responsive kinetic boost across inter-page space
-                const boosted = Math.max(Math.abs(deltaY) * 2.4, 75);
-                window.scrollBy({ top: boosted, behavior: "auto" });
-              }
-              return;
-            }
-          }
-
-          // Backward Transition: between nextPage.start and currPage.end
-          if (deltaY < 0) {
-            const gapTop = currPage.end;
-            const gapBottom = nextPage.start + 40;
-
-            if (scrollY <= gapBottom && scrollY > gapTop) {
-              e.preventDefault();
-
-              // Close approach: smoothly glide straight onto the previous page end
-              if (scrollY <= currPage.end + 140) {
-                window.scrollTo({ top: currPage.end, behavior: "smooth" });
-                triggerHaptic();
-              } else {
-                // Responsive kinetic boost upwards
-                const boosted = Math.max(Math.abs(deltaY) * 2.4, 75);
-                window.scrollBy({ top: -boosted, behavior: "auto" });
-              }
-              return;
-            }
           }
         }
       }
@@ -248,7 +205,7 @@ export default function SmoothScrollDamper() {
           ticks: 0,
           startTime: 0,
         };
-      }, 420);
+      }, 180);
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });

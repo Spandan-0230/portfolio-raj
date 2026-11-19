@@ -976,10 +976,10 @@ export function StageSixRightPane() {
       </div>
 
       {/* Circular Stats & Language Distribution Breakdown (TS 78.5%, JS 19.1%, CSS 1.3%, HTML 1.1%) */}
-      <div className="stats-showcase-box">
+      <div className="ledger-stats-box">
         {/* Circular Donut Chart */}
-        <div className="donut-chart-wrapper">
-          <svg width="124" height="124" viewBox="0 0 100 100" className="donut-svg">
+        <div className="ledger-donut-wrapper">
+          <svg width="108" height="108" viewBox="0 0 100 100" className="donut-svg">
             {donutSlices.map((slice, idx) => {
               const isHovered = activeLang === idx;
               return (
@@ -1017,32 +1017,71 @@ export function StageSixRightPane() {
           </div>
         </div>
 
-        {/* Languages Breakdown 2x2 Matrix (TS, JS, CSS, HTML) */}
-        <div
-          className="lang-list-container"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(120px, 1fr))",
-            columnGap: "18px",
-            rowGap: "8px",
-            alignItems: "center",
-          }}
-        >
-          {LEDGER_LANG_DATA.map((item, idx) => {
-            const isHovered = activeLang === idx;
-            return (
+        {/* Languages Section: GitHub-Style Progress Bar + Explicit 2x2 Matrix */}
+        <div className="ledger-lang-section">
+          {/* GitHub-style multi-color progress bar */}
+          <div className="ledger-lang-progress-bar">
+            {LEDGER_LANG_DATA.map((item) => (
               <div
                 key={item.id}
-                className={`lang-item-row ${isHovered ? "active-row" : ""}`}
-                onMouseEnter={() => setActiveLang(idx)}
+                style={{
+                  width: `${item.pct}%`,
+                  backgroundColor: item.color,
+                  height: "100%",
+                }}
+                title={`${item.name} ${item.pct}%`}
+              />
+            ))}
+          </div>
+
+          {/* 2x2 Matrix: Explicitly Structured into 2 Rows with 2 Columns Each */}
+          <div className="ledger-lang-matrix">
+            {/* Row 1: TypeScript (78.5%) & JavaScript (19.1%) */}
+            <div className="ledger-lang-matrix-row">
+              <div
+                className={`ledger-lang-matrix-item ${activeLang === 0 ? "active-item" : ""}`}
+                onMouseEnter={() => setActiveLang(0)}
                 onMouseLeave={() => setActiveLang(null)}
               >
-                <span className="lang-icon-wrapper">{item.icon}</span>
-                <span className="lang-name-text">{item.name}</span>
-                <span className="lang-pct-text">{item.pct}%</span>
+                <span className="lang-icon-wrapper">{LEDGER_LANG_DATA[0].icon}</span>
+                <span className="lang-name-text">{LEDGER_LANG_DATA[0].name}</span>
+                <span className="lang-pct-text">{LEDGER_LANG_DATA[0].pct}%</span>
               </div>
-            );
-          })}
+
+              <div
+                className={`ledger-lang-matrix-item ${activeLang === 1 ? "active-item" : ""}`}
+                onMouseEnter={() => setActiveLang(1)}
+                onMouseLeave={() => setActiveLang(null)}
+              >
+                <span className="lang-icon-wrapper">{LEDGER_LANG_DATA[1].icon}</span>
+                <span className="lang-name-text">{LEDGER_LANG_DATA[1].name}</span>
+                <span className="lang-pct-text">{LEDGER_LANG_DATA[1].pct}%</span>
+              </div>
+            </div>
+
+            {/* Row 2: CSS (1.3%) & HTML (1.1%) */}
+            <div className="ledger-lang-matrix-row">
+              <div
+                className={`ledger-lang-matrix-item ${activeLang === 2 ? "active-item" : ""}`}
+                onMouseEnter={() => setActiveLang(2)}
+                onMouseLeave={() => setActiveLang(null)}
+              >
+                <span className="lang-icon-wrapper">{LEDGER_LANG_DATA[2].icon}</span>
+                <span className="lang-name-text">{LEDGER_LANG_DATA[2].name}</span>
+                <span className="lang-pct-text">{LEDGER_LANG_DATA[2].pct}%</span>
+              </div>
+
+              <div
+                className={`ledger-lang-matrix-item ${activeLang === 3 ? "active-item" : ""}`}
+                onMouseEnter={() => setActiveLang(3)}
+                onMouseLeave={() => setActiveLang(null)}
+              >
+                <span className="lang-icon-wrapper">{LEDGER_LANG_DATA[3].icon}</span>
+                <span className="lang-name-text">{LEDGER_LANG_DATA[3].name}</span>
+                <span className="lang-pct-text">{LEDGER_LANG_DATA[3].pct}%</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1157,20 +1196,21 @@ export function StageSixRightPane() {
           flex: 1;
         }
 
-        .stats-showcase-box {
+        /* Circular Stats & Language Distribution Breakdown */
+        .ledger-stats-box {
           display: flex;
           align-items: center;
           gap: clamp(14px, 1.8vw, 22px);
           width: 100%;
-          max-width: 480px;
+          max-width: 520px;
           padding: 0;
           margin: 0;
         }
 
-        .donut-chart-wrapper {
+        .ledger-donut-wrapper {
           position: relative;
-          width: 108px;
-          height: 108px;
+          width: 104px;
+          height: 104px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1230,32 +1270,56 @@ export function StageSixRightPane() {
           white-space: nowrap;
         }
 
-        /* 2x2 Matrix Grid for Languages Breakdown */
-        .lang-list-container {
-          display: grid !important;
-          grid-template-columns: repeat(2, minmax(120px, 1fr)) !important;
-          column-gap: clamp(12px, 1.6vw, 20px) !important;
-          row-gap: 8px !important;
-          align-items: center !important;
+        /* Languages Section: GitHub-Style Progress Bar + 2x2 Matrix */
+        .ledger-lang-section {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          flex: 1;
+          min-width: 0;
         }
 
-        .lang-item-row {
-          display: flex !important;
-          align-items: center !important;
-          gap: 8px !important;
-          padding: 3px 0 !important;
-          background: transparent !important;
-          border: none !important;
-          cursor: pointer !important;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-          user-select: none !important;
-          white-space: nowrap !important;
+        .ledger-lang-progress-bar {
+          display: flex;
+          width: 100%;
+          max-width: 320px;
+          height: 7px;
+          border-radius: 999px;
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.08);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
         }
 
-        .lang-item-row:hover,
-        .lang-item-row.active-row {
-          background: transparent !important;
-          transform: translateX(2px) !important;
+        .ledger-lang-matrix {
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+          width: 100%;
+          max-width: 340px;
+        }
+
+        .ledger-lang-matrix-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: clamp(14px, 2vw, 24px);
+          width: 100%;
+        }
+
+        .ledger-lang-matrix-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          user-select: none;
+          white-space: nowrap;
+          min-width: 125px;
+        }
+
+        .ledger-lang-matrix-item:hover,
+        .ledger-lang-matrix-item.active-item {
+          transform: translateX(3px);
         }
 
         .lang-icon-wrapper {
@@ -1274,6 +1338,7 @@ export function StageSixRightPane() {
           color: rgba(255, 255, 255, 0.85);
           white-space: nowrap;
           letter-spacing: -0.01em;
+          transition: color 0.18s ease;
         }
 
         .lang-pct-text {
@@ -1283,11 +1348,19 @@ export function StageSixRightPane() {
           color: rgba(255, 255, 255, 0.45);
           margin-left: auto;
           padding-left: 8px;
+          transition: color 0.18s ease;
         }
 
-        .lang-item-row:hover .lang-name-text,
-        .lang-item-row.active-row .lang-name-text {
+        .ledger-lang-matrix-item:hover .lang-name-text,
+        .ledger-lang-matrix-item.active-item .lang-name-text {
           color: #ffffff;
+        }
+
+        .ledger-lang-matrix-item:hover .lang-pct-text,
+        .ledger-lang-matrix-item.active-item .lang-pct-text {
+          color: #ffffff;
+          font-weight: 700;
+        }
         }
 
         .lang-item-row:hover .lang-pct-text,

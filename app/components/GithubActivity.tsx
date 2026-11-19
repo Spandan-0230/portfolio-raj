@@ -155,7 +155,7 @@ export default function GithubActivity() {
     onScroll();
 
     let rafId: number;
-    const LERP_FACTOR = 0.09;
+    const LERP_FACTOR = 0.16;
 
     const loop = () => {
       if (prefersReducedMotion.matches) {

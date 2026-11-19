@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 
-const LERP_FACTOR = 0.085;
+const LERP_FACTOR = 0.16;
 
 export default function WorksShowcase() {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -231,7 +231,7 @@ export default function WorksShowcase() {
         >
           {/* Main Title: MY WORKS */}
           <h2 className="works-main-title">
-            MY Workshop
+            Workshop
           </h2>
 
           {/* Subtitle 1: CRAFTING DIGITAL EXPERIENCES */}
