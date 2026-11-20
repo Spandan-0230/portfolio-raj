@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import PureImagePopup from "./PureImagePopup";
+import BioSyncGalleryModal from "./BioSyncGalleryModal";
 import { StageFiveLeftPane, StageFiveRightPane } from "./StageFive";
 import { StageSixLeftPane, StageSixRightPane } from "./StageSix";
 
@@ -228,6 +229,7 @@ export default function StageFour() {
 
   // Smooth Elevator Scroll Transition: Stage Four -> Stage Five -> Stage Six
   const [popupImg, setPopupImg] = useState<{ src: string; alt: string } | null>(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState<boolean>(false);
   // The center vertical divider line stays 100% stationary, while both left and right sides move UPWARD on scroll.
   useEffect(() => {
     const track = trackRef.current;
@@ -562,7 +564,7 @@ export default function StageFour() {
                             type="button"
                             className="see-more-btn"
                             title="See more BioSync screenshots"
-                            onClick={() => setPopupImg({ src: BIOSYNC_IMAGES[2].src, alt: BIOSYNC_IMAGES[2].title })}
+                            onClick={() => setIsGalleryOpen(true)}
                           >
                     <span className="see-more-text">See more</span>
                     <svg
@@ -739,6 +741,13 @@ export default function StageFour() {
           onClose={() => setPopupImg(null)}
           src={popupImg?.src || ""}
           alt={popupImg?.alt || ""}
+        />
+
+        {/* BioSync Scrollable Gallery Modal (See more: 3 images per row, last 2 centered) */}
+        <BioSyncGalleryModal
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          images={BIOSYNC_IMAGES}
         />
 
         {/* =========================================================================
