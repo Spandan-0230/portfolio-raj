@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { lockBodyScroll } from "../utils/scrollLock";
 
 interface PureImagePopupProps {
   isOpen: boolean;
@@ -20,8 +21,7 @@ export default function PureImagePopup({ isOpen, onClose, src, alt }: PureImageP
   useEffect(() => {
     if (!isOpen) return;
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -32,7 +32,7 @@ export default function PureImagePopup({ isOpen, onClose, src, alt }: PureImageP
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = originalOverflow;
+      unlock();
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [isOpen, onClose]);
@@ -42,7 +42,11 @@ export default function PureImagePopup({ isOpen, onClose, src, alt }: PureImageP
   return createPortal(
     <div
       className="pure-image-popup-backdrop"
-      onClick={onClose}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+      onWheel={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
     >
@@ -51,7 +55,10 @@ export default function PureImagePopup({ isOpen, onClose, src, alt }: PureImageP
         src={src}
         alt={alt}
         className="pure-image-popup-element"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
       />
 
       <style jsx>{`
@@ -70,6 +77,7 @@ export default function PureImagePopup({ isOpen, onClose, src, alt }: PureImageP
           user-select: none;
           padding: 20px;
           box-sizing: border-box;
+          overscroll-behavior: contain;
         }
 
         .pure-image-popup-element {

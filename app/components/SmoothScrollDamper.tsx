@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { isBodyScrollLocked } from "../utils/scrollLock";
 
 interface Checkpoint {
   id: string;
@@ -118,6 +119,16 @@ export default function SmoothScrollDamper() {
     };
 
     const onWheel = (e: WheelEvent) => {
+      // CRITICAL: Do not intercept wheel events when body scroll is locked or if scrolling inside a modal/gallery
+      if (isBodyScrollLocked() || document.body.style.overflow === "hidden") {
+        return;
+      }
+
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.('.biosync-gallery-backdrop, .ledger-gallery-backdrop, .pure-image-popup-backdrop, [role="dialog"]')) {
+        return;
+      }
+
       const now = performance.now();
       const dt = Math.max(1, now - lastWheelTime.current);
       lastWheelTime.current = now;
@@ -215,6 +226,7 @@ export default function SmoothScrollDamper() {
     let touchStartTime = 0;
 
     const onTouchStart = (e: TouchEvent) => {
+      if (isBodyScrollLocked() || document.body.style.overflow === "hidden") return;
       if (e.touches.length > 0) {
         touchStartY = e.touches[0].clientY;
         touchStartTime = performance.now();
@@ -222,6 +234,11 @@ export default function SmoothScrollDamper() {
     };
 
     const onTouchEnd = (e: TouchEvent) => {
+      if (isBodyScrollLocked() || document.body.style.overflow === "hidden") return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.('.biosync-gallery-backdrop, .ledger-gallery-backdrop, .pure-image-popup-backdrop, [role="dialog"]')) {
+        return;
+      }
       if (e.changedTouches.length === 0) return;
       const touchEndY = e.changedTouches[0].clientY;
       const touchDuration = Math.max(1, performance.now() - touchStartTime);

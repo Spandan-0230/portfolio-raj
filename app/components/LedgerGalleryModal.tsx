@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import PureImagePopup from "./PureImagePopup";
 import { LedgerImage } from "./StageSix";
+import { lockBodyScroll } from "../utils/scrollLock";
 
 interface LedgerGalleryModalProps {
   isOpen: boolean;
@@ -23,12 +24,18 @@ export default function LedgerGalleryModal({
     setMounted(true);
   }, []);
 
-  // Lock body scroll and handle Escape key
+  // Lock body scroll while gallery is open
   useEffect(() => {
     if (!isOpen) return;
+    const unlock = lockBodyScroll();
+    return () => {
+      unlock();
+    };
+  }, [isOpen]);
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+  // Handle Escape key
+  useEffect(() => {
+    if (!isOpen) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -43,7 +50,6 @@ export default function LedgerGalleryModal({
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [isOpen, onClose, focusedImg]);
@@ -178,6 +184,8 @@ export default function LedgerGalleryModal({
           -webkit-backdrop-filter: blur(14px);
           overflow-y: auto;
           overflow-x: hidden;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
           animation: galleryFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           user-select: none;
           scrollbar-width: none; /* Firefox */
