@@ -82,6 +82,14 @@ export default function SmoothScrollDamper() {
         pages.push({ id: "languages", name: "Languages", start, end });
       }
 
+      // Page 6: Interactive Character Head Tracking Showcase
+      const charEl = document.getElementById("character");
+      if (charEl) {
+        const start = charEl.offsetTop;
+        const end = start + Math.max(0, charEl.offsetHeight - winH);
+        pages.push({ id: "character", name: "Character", start, end });
+      }
+
       return pages;
     };
 

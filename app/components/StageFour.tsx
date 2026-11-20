@@ -625,15 +625,15 @@ export default function StageFour() {
               >
                 <span className="see-more-projects-text">See more projects</span>
                 <svg
-                  width="12"
-                  height="14"
-                  viewBox="0 0 22 26"
+                  width="11"
+                  height="13"
+                  viewBox="0 0 24 26"
                   fill="currentColor"
                   className="see-more-projects-arrow"
                   xmlns="http://www.w3.org/2000/svg"
                   aria-hidden="true"
                 >
-                  <path d="M0 0L22 13L0 26L2 15L12 13L2 11Z" />
+                  <path d="M0 0L24 13L0 26L12 13Z" />
                 </svg>
               </a>
             </div>

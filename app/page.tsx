@@ -5,6 +5,7 @@ import GithubActivity from "./components/GithubActivity";
 import WorksShowcase from "./components/WorksShowcase";
 import StageFour from "./components/StageFour";
 import LanguageShowcase from "./components/LanguageShowcase";
+import HeadTrackingSection from "./components/HeadTrackingSection";
 import SmoothScrollDamper from "./components/SmoothScrollDamper";
 import ScrollPrompt from "./components/ScrollPrompt";
 import SideMargins from "./components/SideMargins";
@@ -648,8 +649,11 @@ export default function Home() {
       {/* Page 4: Cinematic Ambient Stage (Blank Page 3 background) */}
       <StageFour />
 
-      {/* Page 5: Languages Showcase Section (Final Page) */}
+      {/* Page 5: Languages Showcase Section */}
       <LanguageShowcase />
+
+      {/* Page 6: Interactive Character Head Tracking Section */}
+      <HeadTrackingSection />
 
       {/* Smooth Page-Wise Scroll Damper with Haptic Feedback */}
       <SmoothScrollDamper />
