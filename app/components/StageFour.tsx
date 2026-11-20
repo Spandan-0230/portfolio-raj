@@ -203,6 +203,7 @@ export default function StageFour() {
   const stage5RightRef = useRef<HTMLDivElement>(null);
   const stage6LeftRef = useRef<HTMLDivElement>(null);
   const stage6RightRef = useRef<HTMLDivElement>(null);
+  const stage6MoreProjectsRef = useRef<HTMLDivElement>(null);
   const targetProgress = useRef<number>(0);
   const currentProgress = useRef<number>(0);
   const rafId = useRef<number | null>(null);
@@ -357,6 +358,12 @@ export default function StageFour() {
         stage6RightRef.current.style.pointerEvents = isStage6Active ? "auto" : "none";
         stage6RightRef.current.style.visibility = s6Opacity > 0.005 ? "visible" : "hidden";
       }
+      if (stage6MoreProjectsRef.current) {
+        stage6MoreProjectsRef.current.style.transform = `translate3d(-50%, ${s6Y}vh, 0)`;
+        stage6MoreProjectsRef.current.style.opacity = `${s6Opacity}`;
+        stage6MoreProjectsRef.current.style.pointerEvents = isStage6Active ? "auto" : "none";
+        stage6MoreProjectsRef.current.style.visibility = s6Opacity > 0.005 ? "visible" : "hidden";
+      }
 
       rafId.current = requestAnimationFrame(renderLoop);
     };
@@ -506,18 +513,18 @@ export default function StageFour() {
               LEFT: Photo Showcase with Symmetric Alignment (Dual Layer: Stage 4 & Stage 5)
               ------------------------------------------------------------- */}
           <div className="showcase-left-pane">
-                    {/* Stage Four Left Layer (BioSync) */}
+            {/* Stage Four Left Layer (BioSync) */}
             <div ref={stage4LeftRef} className="project-layer-pane">
-                    <div className="portrait-showcase-container">
-                      {/* GitHub Repo Button (Positioned just above the middle phone) */}
-                      <div className="github-link-container">
-                        <a
-                          href="https://github.com/Spandan-0230/BioSync"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="github-repo-link"
-                          title="Open GitHub/Spandan-0230/BioSync"
-                        >
+              <div className="portrait-showcase-container">
+                {/* GitHub Repo Button (Positioned just above the middle phone) */}
+                <div className="github-link-container">
+                  <a
+                    href="https://github.com/Spandan-0230/BioSync"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="github-repo-link"
+                    title="Open GitHub/Spandan-0230/BioSync"
+                  >
                     <svg
                       className="github-icon"
                       width="14"
@@ -533,39 +540,39 @@ export default function StageFour() {
                       />
                     </svg>
                     <span className="github-link-text">GitHub/BioSync</span>
-                </a>
-              </div>
+                  </a>
+                </div>
 
-                        {/* 3 Tall Portrait Smartphone Blocks (1.png, 2.png, 5.png) */}
-                        <div className="portrait-top-row">
-                          {featuredImages.map((img) => {
-                            return (
-                              <div
-                                key={img.id}
-                                className="portrait-device-card"
-                                onClick={() => setPopupImg({ src: img.src, alt: img.title })}
-                              >
-                                <div className="device-screen-inner">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={img.src}
-                                    alt={img.title}
-                                    className="device-img"
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
+                {/* 3 Tall Portrait Smartphone Blocks (1.png, 2.png, 5.png) */}
+                <div className="portrait-top-row">
+                  {featuredImages.map((img) => {
+                    return (
+                      <div
+                        key={img.id}
+                        className="portrait-device-card"
+                        onClick={() => setPopupImg({ src: img.src, alt: img.title })}
+                      >
+                        <div className="device-screen-inner">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={img.src}
+                            alt={img.title}
+                            className="device-img"
+                          />
                         </div>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                        {/* See More Action (Matching provided UI: text + down chevron) */}
-                        <div className="see-more-container">
-                          <button
-                            type="button"
-                            className="see-more-btn"
-                            title="See more BioSync screenshots"
-                            onClick={() => setIsGalleryOpen(true)}
-                          >
+                {/* See More Action (Matching provided UI: text + down chevron) */}
+                <div className="see-more-container">
+                  <button
+                    type="button"
+                    className="see-more-btn"
+                    title="See more BioSync screenshots"
+                    onClick={() => setIsGalleryOpen(true)}
+                  >
                     <span className="see-more-text">See more</span>
                     <svg
                       className="see-more-icon"
@@ -586,174 +593,201 @@ export default function StageFour() {
                     </svg>
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Stage Five Left Layer (FloatView) */}
+            <div ref={stage5LeftRef} className="project-layer-pane layer-absolute layer-hidden">
+              <StageFiveLeftPane />
+            </div>
+
+            {/* Stage Six Left Layer (Ledger Website) */}
+            <div ref={stage6LeftRef} className="project-layer-pane layer-absolute layer-hidden">
+              <StageSixLeftPane />
             </div>
           </div>
 
-          {/* Stage Five Left Layer (FloatView) */}
-          <div ref={stage5LeftRef} className="project-layer-pane layer-absolute layer-hidden">
-            <StageFiveLeftPane />
-          </div>
-
-          {/* Stage Six Left Layer (Ledger Website) */}
-          <div ref={stage6LeftRef} className="project-layer-pane layer-absolute layer-hidden">
-            <StageSixLeftPane />
-          </div>
-        </div>
-
-        {/* -------------------------------------------------------------
-              CENTER: Elegant Vertical Divider Line "|" (Stationary)
+          {/* -------------------------------------------------------------
+              CENTER: Elegant Vertical Divider Line "|" with Stage 6 "See more projects"
               ------------------------------------------------------------- */}
-        <div className="center-divider" aria-hidden="true" />
+          <div className="center-divider-wrapper">
+            <div className="center-divider" aria-hidden="true" />
+            <div
+              ref={stage6MoreProjectsRef}
+              className="see-more-projects-layer"
+            >
+              <a
+                href="https://github.com/Spandan-0230?tab=repositories"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="see-more-projects-link"
+                title="View all repositories on GitHub"
+              >
+                <span className="see-more-projects-text">See more projects</span>
+                <svg
+                  width="12"
+                  height="14"
+                  viewBox="0 0 22 26"
+                  fill="currentColor"
+                  className="see-more-projects-arrow"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path d="M0 0L22 13L0 26L2 15L12 13L2 11Z" />
+                </svg>
+              </a>
+            </div>
+          </div>
 
-        {/* -------------------------------------------------------------
+          {/* -------------------------------------------------------------
               RIGHT: Project Title, Description & Language Distribution Stats (Dual Layer)
               ------------------------------------------------------------- */}
-        <div className="showcase-right-pane">
-              {/* Stage Four Right Layer (BioSync) */}
-              <div ref={stage4RightRef} className="project-layer-pane">
-                <div className="project-header-group">
-                  <h1 className="project-title-italic">
-                    Bio<span className="neon-sync-text">Sync</span>
-                  </h1>
-                  <div className="project-desc-text">
-                    <br></br>
-                    Offline-first Android fitness &amp; nutrient tracker in Kotlin &amp;  Features daily macro/hydration/step logging, historical stats &amp; streaks, interactive home widgets, persistent custom notifications, and live background step sync in a true-black OLED UI.
+          <div className="showcase-right-pane">
+            {/* Stage Four Right Layer (BioSync) */}
+            <div ref={stage4RightRef} className="project-layer-pane">
+              <div className="project-header-group">
+                <h1 className="project-title-italic">
+                  Bio<span className="neon-sync-text">Sync</span>
+                </h1>
+                <div className="project-desc-text">
+                  <br></br>
+                  Offline-first Android fitness &amp; nutrient tracker in Kotlin &amp;  Features daily macro/hydration/step logging, historical stats &amp; streaks, interactive home widgets, persistent custom notifications, and live background step sync in a true-black OLED UI.
 
-                    <ul className="feature-list">
-                      <li className="feature-item">
-                        <FeatureBulletIcon />
-                        <span className="feature-text">🧬 Multi-Stage Biometric Onboarding &amp; Calibration</span>
-                      </li>
-                      <li className="feature-item">
-                        <FeatureBulletIcon />
-                        <span className="feature-text">📊 Live Telemetry Dashboard &amp; Quick-Action Logging</span>
-                      </li>
-                      <li className="feature-item">
-                        <FeatureBulletIcon />
-                        <span className="feature-text">📱 Custom Android Home Screen Widget</span>
-                      </li>
-                      <li className="feature-item">
-                        <FeatureBulletIcon />
-                        <span className="feature-text">📳 Smart Notifications &amp; Local-First Storage</span>
-                      </li>
-                      <br></br>
-                    </ul>
+                  <ul className="feature-list">
+                    <li className="feature-item">
+                      <FeatureBulletIcon />
+                      <span className="feature-text">🧬 Multi-Stage Biometric Onboarding &amp; Calibration</span>
+                    </li>
+                    <li className="feature-item">
+                      <FeatureBulletIcon />
+                      <span className="feature-text">📊 Live Telemetry Dashboard &amp; Quick-Action Logging</span>
+                    </li>
+                    <li className="feature-item">
+                      <FeatureBulletIcon />
+                      <span className="feature-text">📱 Custom Android Home Screen Widget</span>
+                    </li>
+                    <li className="feature-item">
+                      <FeatureBulletIcon />
+                      <span className="feature-text">📳 Smart Notifications &amp; Local-First Storage</span>
+                    </li>
+                    <br></br>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Circular Stats & Language Distribution Breakdown */}
+              <div className="stats-showcase-box">
+                {/* Circular Donut Chart */}
+                <div className="donut-chart-wrapper">
+                  <svg width="124" height="124" viewBox="0 0 100 100" className="donut-svg">
+                    {donutSlices.map((slice, idx) => {
+                      const isHovered = activeLang === idx;
+                      return (
+                        <path
+                          key={slice.id}
+                          d={describeDonutSegment(
+                            50,
+                            50,
+                            isHovered ? 29 : 31,
+                            isHovered ? 47 : 44,
+                            slice.startAngle,
+                            slice.endAngle
+                          )}
+                          fill={slice.color}
+                          className={`donut-path ${isHovered ? "active-slice" : ""}`}
+                          onMouseEnter={() => setActiveLang(idx)}
+                          onMouseLeave={() => setActiveLang(null)}
+                        />
+                      );
+                    })}
+                  </svg>
+
+                  {/* Donut Center Info */}
+                  <div className="donut-center-info">
+                    {activeLang !== null ? (
+                      <>
+                        <span className="donut-center-val" style={{ color: LANG_DATA[activeLang].color }}>
+                          {LANG_DATA[activeLang].pct}%
+                        </span>
+                        <span className="donut-center-label">{LANG_DATA[activeLang].shortName}</span>
+                      </>
+                    ) : (
+                      <span className="donut-center-val">100%</span>
+                    )}
                   </div>
                 </div>
 
-                      {/* Circular Stats & Language Distribution Breakdown */ }
-                      <div className="stats-showcase-box">
-                        {/* Circular Donut Chart */}
-                        <div className="donut-chart-wrapper">
-                          <svg width="124" height="124" viewBox="0 0 100 100" className="donut-svg">
-                            {donutSlices.map((slice, idx) => {
-                              const isHovered = activeLang === idx;
-                              return (
-                                <path
-                                  key={slice.id}
-                                  d={describeDonutSegment(
-                                    50,
-                                    50,
-                                    isHovered ? 29 : 31,
-                                    isHovered ? 47 : 44,
-                                    slice.startAngle,
-                                    slice.endAngle
-                                  )}
-                                  fill={slice.color}
-                                  className={`donut-path ${isHovered ? "active-slice" : ""}`}
-                                  onMouseEnter={() => setActiveLang(idx)}
-                                  onMouseLeave={() => setActiveLang(null)}
-                                />
-                              );
-                            })}
-                          </svg>
+                {/* Languages Section: GitHub-Style Progress Bar + Languages Row */}
+                <div className="project-lang-section">
+                  {/* GitHub-style multi-color progress bar */}
+                  <div className="project-lang-progress-bar">
+                    {LANG_DATA.map((item) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          width: `${item.pct}%`,
+                          backgroundColor: item.color,
+                          height: "100%",
+                        }}
+                        title={`${item.name} ${item.pct}%`}
+                      />
+                    ))}
+                  </div>
 
-                          {/* Donut Center Info */}
-                          <div className="donut-center-info">
-                            {activeLang !== null ? (
-                              <>
-                                <span className="donut-center-val" style={{ color: LANG_DATA[activeLang].color }}>
-                                  {LANG_DATA[activeLang].pct}%
-                                </span>
-                                <span className="donut-center-label">{LANG_DATA[activeLang].shortName}</span>
-                              </>
-                            ) : (
-                              <span className="donut-center-val">100%</span>
-                            )}
-                          </div>
+                  {/* Languages Row: Kotlin 98.4%, HTML 1.6% */}
+                  <div className="project-lang-row">
+                    {LANG_DATA.map((item, idx) => {
+                      const isHovered = activeLang === idx;
+                      return (
+                        <div
+                          key={item.id}
+                          className={`project-lang-item ${isHovered ? "active-item" : ""}`}
+                          onMouseEnter={() => setActiveLang(idx)}
+                          onMouseLeave={() => setActiveLang(null)}
+                        >
+                          <span className="lang-icon-wrapper">{item.icon}</span>
+                          <span className="lang-name-text">{item.name}</span>
+                          <span className="lang-pct-text">{item.pct}%</span>
                         </div>
-
-                        {/* Languages Section: GitHub-Style Progress Bar + Languages Row */}
-                        <div className="project-lang-section">
-                          {/* GitHub-style multi-color progress bar */}
-                          <div className="project-lang-progress-bar">
-                            {LANG_DATA.map((item) => (
-                              <div
-                                key={item.id}
-                                style={{
-                                  width: `${item.pct}%`,
-                                  backgroundColor: item.color,
-                                  height: "100%",
-                                }}
-                                title={`${item.name} ${item.pct}%`}
-                              />
-                            ))}
-                          </div>
-
-                          {/* Languages Row: Kotlin 98.4%, HTML 1.6% */}
-                          <div className="project-lang-row">
-                            {LANG_DATA.map((item, idx) => {
-                              const isHovered = activeLang === idx;
-                              return (
-                                <div
-                                  key={item.id}
-                                  className={`project-lang-item ${isHovered ? "active-item" : ""}`}
-                                  onMouseEnter={() => setActiveLang(idx)}
-                                  onMouseLeave={() => setActiveLang(null)}
-                                >
-                                  <span className="lang-icon-wrapper">{item.icon}</span>
-                                  <span className="lang-name-text">{item.name}</span>
-                                  <span className="lang-pct-text">{item.pct}%</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              </div>
+            </div>
 
-              {/* Stage Five Right Layer (FloatView) */}
-              <div ref={stage5RightRef} className="project-layer-pane layer-absolute layer-hidden">
-                <StageFiveRightPane />
-              </div>
+            {/* Stage Five Right Layer (FloatView) */}
+            <div ref={stage5RightRef} className="project-layer-pane layer-absolute layer-hidden">
+              <StageFiveRightPane />
+            </div>
 
-              {/* Stage Six Right Layer (Ledger Website) */}
-              <div ref={stage6RightRef} className="project-layer-pane layer-absolute layer-hidden">
-                <StageSixRightPane />
-              </div>
+            {/* Stage Six Right Layer (Ledger Website) */}
+            <div ref={stage6RightRef} className="project-layer-pane layer-absolute layer-hidden">
+              <StageSixRightPane />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Pure Image Pop-up (No UI elements, no background block) */}
-        <PureImagePopup
-          isOpen={popupImg !== null}
-          onClose={() => setPopupImg(null)}
-          src={popupImg?.src || ""}
-          alt={popupImg?.alt || ""}
-        />
+      {/* Pure Image Pop-up (No UI elements, no background block) */}
+      <PureImagePopup
+        isOpen={popupImg !== null}
+        onClose={() => setPopupImg(null)}
+        src={popupImg?.src || ""}
+        alt={popupImg?.alt || ""}
+      />
 
-        {/* BioSync Scrollable Gallery Modal (See more: 3 images per row, last 2 centered) */}
-        <BioSyncGalleryModal
-          isOpen={isGalleryOpen}
-          onClose={() => setIsGalleryOpen(false)}
-          images={BIOSYNC_IMAGES}
-        />
+      {/* BioSync Scrollable Gallery Modal (See more: 3 images per row, last 2 centered) */}
+      <BioSyncGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        images={BIOSYNC_IMAGES}
+      />
 
-        {/* =========================================================================
+      {/* =========================================================================
           COMPONENT STYLES (Clean, Symmetric, Responsive)
           ========================================================================= */}
-        <style jsx>{`
+      <style jsx>{`
         .sticky-stage {
           --stage-col-gap: clamp(24px, 2.6vw, 50px);
           display: flex;
@@ -989,9 +1023,18 @@ export default function StageFour() {
         /* -------------------------------------------------------------
            CENTER: Sleek Vertical Divider "|" Framing & Matching the 3 Phones
            ------------------------------------------------------------- */
+        .center-divider-wrapper {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: stretch;
+          height: clamp(440px, min(50vh, 29vw), 490px);
+          flex-shrink: 0;
+        }
+
         .center-divider {
           width: 1.5px;
-          height: clamp(390px, min(50vh, 29vw), 490px);
+          height: 100%;
           background: linear-gradient(
             180deg,
             transparent 0%,
@@ -1001,6 +1044,64 @@ export default function StageFour() {
           );
           border-radius: 1px;
           flex-shrink: 0;
+        }
+
+        .see-more-projects-layer {
+          position: absolute;
+          bottom: clamp(-54px, -6.5vh, -44px);
+          left: 50%;
+          transform: translate3d(-50%, 115vh, 0);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 25;
+          pointer-events: none;
+          opacity: 0;
+          white-space: nowrap;
+        }
+
+        .see-more-projects-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          background: transparent;
+          border: none;
+          outline: none;
+          box-shadow: none;
+          color: rgba(255, 255, 255, 0.65);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          font-size: clamp(12px, 1.05vw, 14px);
+          font-weight: 400;
+          letter-spacing: 0.04em;
+          text-decoration: none;
+          cursor: url('/cursor.png') 0 0, pointer !important;
+          transition: color 0.2s ease, transform 0.2s ease;
+          user-select: none;
+          pointer-events: auto;
+          padding: 6px 10px;
+        }
+
+        .see-more-projects-link:hover {
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          color: #ffffff;
+        }
+
+        .see-more-projects-text {
+          color: inherit;
+        }
+
+        .see-more-projects-arrow {
+          width: 11px;
+          height: 13px;
+          fill: currentColor;
+          transition: transform 0.2s ease;
+          flex-shrink: 0;
+        }
+
+        .see-more-projects-link:hover .see-more-projects-arrow {
+          transform: translateX(3px);
         }
 
         /* -------------------------------------------------------------
@@ -1369,8 +1470,21 @@ export default function StageFour() {
             justify-content: center;
           }
 
+          .center-divider-wrapper {
+            height: auto;
+            width: 100%;
+          }
+
           .center-divider {
             display: none;
+          }
+
+          .see-more-projects-layer {
+            position: relative;
+            bottom: auto;
+            left: auto;
+            transform: none !important;
+            margin: 16px auto 0;
           }
 
           .showcase-left-pane {
