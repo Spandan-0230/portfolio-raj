@@ -223,16 +223,24 @@ export default function BioSyncGalleryModal({
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          cursor: pointer;
+          cursor: url('/cursor.png') 0 0, pointer !important;
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+          transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+          user-select: none;
         }
 
         .gallery-close-btn:hover {
-          background-color: rgba(255, 255, 255, 0.2);
-          border-color: rgba(255, 255, 255, 0.45);
-          transform: scale(1.05);
+          background-color: #ffffff;
+          color: #000000;
+          border-color: #ffffff;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .gallery-close-btn:active {
+          transform: none;
+          box-shadow: none;
         }
 
         .close-symbol {

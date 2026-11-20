@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import PureImagePopup from "./PureImagePopup";
+import LedgerGalleryModal from "./LedgerGalleryModal";
 
 export interface LedgerImage {
   id: number;
@@ -81,9 +82,9 @@ export const LEDGER_IMAGES: LedgerImage[] = [
     src: "/projects/ledger/7.png",
     title: "Cash Flow & Audit Statements",
     subtitle: "Audited monthly balances, tax summaries & exportable receipts",
-    width: 1365,
+    width: 848,
     height: 460,
-    aspect: 1365 / 460, // ~2.97
+    aspect: 848 / 460, // ~1.84
   },
   {
     id: 8,
@@ -216,6 +217,7 @@ function FeatureBulletIcon() {
 export function StageSixLeftPane() {
   const [activeIdx, setActiveIdx] = useState<number>(0);
   const [popupImg, setPopupImg] = useState<{ src: string; alt: string } | null>(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState<boolean>(false);
 
   const activeImage = LEDGER_IMAGES[activeIdx];
 
@@ -303,7 +305,7 @@ export function StageSixLeftPane() {
           type="button"
           className="see-more-btn"
           title="See more Ledger screenshots"
-          onClick={() => setPopupImg({ src: LEDGER_IMAGES[4].src, alt: LEDGER_IMAGES[4].title })}
+          onClick={() => setIsGalleryOpen(true)}
         >
           <span className="see-more-text">See more</span>
           <svg
@@ -332,6 +334,13 @@ export function StageSixLeftPane() {
         onClose={() => setPopupImg(null)}
         src={popupImg?.src || ""}
         alt={popupImg?.alt || ""}
+      />
+
+      {/* Ledger Scrollable Gallery Modal (See more: 3 images per row, last 2 centered: 7 & 8) */}
+      <LedgerGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        images={LEDGER_IMAGES}
       />
 
       <style jsx>{`
