@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 
 export interface LedgerImage {
   id: number;
@@ -215,99 +215,10 @@ function FeatureBulletIcon() {
 export function StageSixLeftPane() {
   const [activeIdx, setActiveIdx] = useState<number>(0);
 
-  // Lightbox Zoom Modal States
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [zoomScale, setZoomScale] = useState<number>(1);
-  const [panPos, setPanPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
   const activeImage = LEDGER_IMAGES[activeIdx];
 
   // The 4 prominent featured screenshots in the single line
   const featuredThumbnails = LEDGER_IMAGES.slice(0, 4);
-
-  const openModal = (idx: number) => {
-    setActiveIdx(idx);
-    setZoomScale(1);
-    setPanPos({ x: 0, y: 0 });
-    setIsModalOpen(true);
-  };
-
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setZoomScale(1);
-    setPanPos({ x: 0, y: 0 });
-  }, []);
-
-  const nextModalImage = useCallback(() => {
-    setActiveIdx((prev) => (prev + 1) % LEDGER_IMAGES.length);
-    setZoomScale(1);
-    setPanPos({ x: 0, y: 0 });
-  }, []);
-
-  const prevModalImage = useCallback(() => {
-    setActiveIdx((prev) => (prev - 1 + LEDGER_IMAGES.length) % LEDGER_IMAGES.length);
-    setZoomScale(1);
-    setPanPos({ x: 0, y: 0 });
-  }, []);
-
-  // Keyboard navigation for lightbox
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeModal();
-      } else if (e.key === "ArrowRight") {
-        nextModalImage();
-      } else if (e.key === "ArrowLeft") {
-        prevModalImage();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isModalOpen, closeModal, nextModalImage, prevModalImage]);
-
-  const handleModalWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const delta = e.deltaY < 0 ? 0.25 : -0.25;
-    setZoomScale((prev) => {
-      const next = Math.max(1, Math.min(3.5, prev + delta));
-      if (next === 1) setPanPos({ x: 0, y: 0 });
-      return next;
-    });
-  };
-
-  const handleImageClickToggleZoom = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setZoomScale((prev) => {
-      if (prev < 1.6) return 2.0;
-      if (prev < 2.6) return 3.0;
-      setPanPos({ x: 0, y: 0 });
-      return 1.0;
-    });
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoomScale <= 1) return;
-    setIsDragging(true);
-    dragStartRef.current = { x: e.clientX - panPos.x, y: e.clientY - panPos.y };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || zoomScale <= 1) return;
-    setPanPos({
-      x: e.clientX - dragStartRef.current.x,
-      y: e.clientY - dragStartRef.current.y,
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
 
   return (
     <div className="landscape-showcase-container">
@@ -342,8 +253,6 @@ export function StageSixLeftPane() {
       <div className="main-screen-wrapper">
         <div
           className="main-screen-card"
-          onClick={() => openModal(activeIdx)}
-          title={`Click to zoom: ${activeImage.title}`}
           style={{
             aspectRatio: `${activeImage.width} / ${activeImage.height}`,
           }}
@@ -388,7 +297,6 @@ export function StageSixLeftPane() {
           type="button"
           className="see-more-btn"
           title="See more Ledger screenshots"
-          onClick={() => openModal(4)}
         >
           <span className="see-more-text">See more</span>
           <svg
@@ -410,95 +318,6 @@ export function StageSixLeftPane() {
           </svg>
         </button>
       </div>
-
-      {/* Lightbox Zoom Modal for Ledger Screenshots (All 8 Images Available) */}
-      {isModalOpen && (
-        <div
-          className="lightbox-overlay"
-          onClick={closeModal}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="lightbox-top-bar" onClick={(e) => e.stopPropagation()}>
-            <div className="lightbox-title-text">
-              <span className="brand-pill">Ledger Website</span>
-              <span className="sep">/</span>
-              <span className="curr-name">
-                {LEDGER_IMAGES[activeIdx].title} (0{activeIdx + 1} of 0{LEDGER_IMAGES.length})
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={closeModal}
-              className="lightbox-close-btn"
-              aria-label="Close Lightbox"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div
-            className="lightbox-stage"
-            onWheel={handleModalWheel}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onClick={closeModal}
-          >
-            <div
-              className="lightbox-img-wrapper"
-              onClick={handleImageClickToggleZoom}
-              style={{
-                transform: `translate(${panPos.x}px, ${panPos.y}px) scale(${zoomScale})`,
-                cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={LEDGER_IMAGES[activeIdx].src}
-                alt={LEDGER_IMAGES[activeIdx].title}
-                className="lightbox-image"
-                draggable={false}
-              />
-            </div>
-          </div>
-
-          <div className="lightbox-bottom-dock" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={prevModalImage}
-              className="dock-btn"
-              title="Previous screen (←)"
-            >
-              ◀ Prev
-            </button>
-            <div className="dock-divider" />
-            <span className="dock-info">Zoom: {Math.round(zoomScale * 100)}%</span>
-            <div className="dock-divider" />
-            <button
-              type="button"
-              onClick={() => {
-                setZoomScale(1);
-                setPanPos({ x: 0, y: 0 });
-              }}
-              className="dock-btn-reset"
-              title="Reset Zoom"
-            >
-              Reset
-            </button>
-            <div className="dock-divider" />
-            <button
-              type="button"
-              onClick={nextModalImage}
-              className="dock-btn"
-              title="Next screen (→)"
-            >
-              Next ▶
-            </button>
-          </div>
-        </div>
-      )}
 
       <style jsx>{`
         .landscape-showcase-container {
@@ -618,7 +437,7 @@ export function StageSixLeftPane() {
           border: 1.5px solid rgba(255, 255, 255, 0.28);
           border-radius: 16px;
           overflow: hidden;
-          cursor: pointer;
+          cursor: default;
           box-shadow: 0 22px 56px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;
@@ -763,161 +582,6 @@ export function StageSixLeftPane() {
 
         .see-more-btn:hover .see-more-icon {
           transform: translateY(2px);
-        }
-
-        /* Fullscreen Lightbox Overlay */
-        .lightbox-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 9999;
-          background: rgba(0, 0, 0, 0.94);
-          backdrop-filter: blur(14px);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: space-between;
-          padding: 24px 32px;
-          box-sizing: border-box;
-          animation: lightboxFadeIn 0.2s ease-out;
-        }
-
-        @keyframes lightboxFadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        .lightbox-top-bar {
-          width: 100%;
-          max-width: 1200px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          z-index: 10001;
-        }
-
-        .lightbox-title-text {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 15px;
-          color: rgba(255, 255, 255, 0.75);
-        }
-
-        .brand-pill {
-          padding: 3px 9px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 999px;
-          color: #ffffff;
-          font-weight: 600;
-          font-size: 13px;
-        }
-
-        .sep {
-          color: rgba(255, 255, 255, 0.3);
-        }
-
-        .curr-name {
-          color: #ffffff;
-          font-weight: 500;
-        }
-
-        .lightbox-close-btn {
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #ffffff;
-          font-size: 15px;
-          cursor: pointer;
-          transition: all 0.18s ease;
-        }
-
-        .lightbox-close-btn:hover {
-          background: rgba(255, 255, 255, 0.25);
-          transform: scale(1.08);
-        }
-
-        .lightbox-stage {
-          position: relative;
-          flex: 1;
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          cursor: zoom-out;
-        }
-
-        .lightbox-img-wrapper {
-          position: relative;
-          max-width: 90vw;
-          max-height: 75vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.08s ease-out;
-          user-select: none;
-        }
-
-        .lightbox-image {
-          max-width: 88vw;
-          max-height: 72vh;
-          object-fit: contain;
-          border-radius: 12px;
-          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.12);
-        }
-
-        .lightbox-bottom-dock {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          background: rgba(20, 20, 24, 0.85);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 999px;
-          padding: 8px 18px;
-          backdrop-filter: blur(12px);
-          z-index: 10001;
-        }
-
-        .dock-btn,
-        .dock-btn-reset {
-          background: transparent;
-          border: none;
-          color: rgba(255, 255, 255, 0.8);
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          padding: 4px 8px;
-          border-radius: 6px;
-          transition: all 0.18s ease;
-        }
-
-        .dock-btn:hover,
-        .dock-btn-reset:hover {
-          color: #ffffff;
-          background: rgba(255, 255, 255, 0.12);
-        }
-
-        .dock-divider {
-          width: 1px;
-          height: 14px;
-          background: rgba(255, 255, 255, 0.2);
-        }
-
-        .dock-info {
-          font-family: ui-monospace, SFMono-Regular, monospace;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.55);
         }
       `}</style>
     </div>

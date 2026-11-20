@@ -225,58 +225,6 @@ export default function StageFour() {
     });
   }, []);
 
-  // Lightbox Modal Zoom States
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [modalIndex, setModalIndex] = useState<number>(0);
-  const [zoomScale, setZoomScale] = useState<number>(1);
-  const [panPos, setPanPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  // Open modal for a specific image
-  const openModal = (idx: number) => {
-    setModalIndex(idx);
-    setZoomScale(1);
-    setPanPos({ x: 0, y: 0 });
-    setIsModalOpen(true);
-  };
-
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setZoomScale(1);
-    setPanPos({ x: 0, y: 0 });
-  }, []);
-
-  const nextModalImage = useCallback(() => {
-    setModalIndex((prev) => (prev + 1) % BIOSYNC_IMAGES.length);
-    setZoomScale(1);
-    setPanPos({ x: 0, y: 0 });
-  }, []);
-
-  const prevModalImage = useCallback(() => {
-    setModalIndex((prev) => (prev - 1 + BIOSYNC_IMAGES.length) % BIOSYNC_IMAGES.length);
-    setZoomScale(1);
-    setPanPos({ x: 0, y: 0 });
-  }, []);
-
-  // Keyboard navigation for lightbox
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeModal();
-      } else if (e.key === "ArrowRight") {
-        nextModalImage();
-      } else if (e.key === "ArrowLeft") {
-        prevModalImage();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isModalOpen, closeModal, nextModalImage, prevModalImage]);
-
   // Smooth Elevator Scroll Transition: Stage Four -> Stage Five -> Stage Six
   // The center vertical divider line stays 100% stationary, while both left and right sides move UPWARD on scroll.
   useEffect(() => {
@@ -422,48 +370,6 @@ export default function StageFour() {
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
   }, []);
-
-  // Modal Mouse Wheel Zoom
-  const handleModalWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const delta = e.deltaY < 0 ? 0.25 : -0.25;
-    setZoomScale((prev) => {
-      const next = Math.max(1, Math.min(3.5, prev + delta));
-      if (next === 1) setPanPos({ x: 0, y: 0 });
-      return next;
-    });
-  };
-
-  // Toggle Zoom on click
-  const handleImageClickToggleZoom = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setZoomScale((prev) => {
-      if (prev < 1.6) return 2.0;
-      if (prev < 2.6) return 3.0;
-      setPanPos({ x: 0, y: 0 });
-      return 1.0;
-    });
-  };
-
-  // Drag to pan handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoomScale <= 1) return;
-    setIsDragging(true);
-    dragStartRef.current = { x: e.clientX - panPos.x, y: e.clientY - panPos.y };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || zoomScale <= 1) return;
-    setPanPos({
-      x: e.clientX - dragStartRef.current.x,
-      y: e.clientY - dragStartRef.current.y,
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
 
   // The 3 prominent featured portrait screenshots for the top row (1.png, 2.png, 5.png)
   const featuredImages = [
@@ -629,13 +535,10 @@ export default function StageFour() {
                         {/* 3 Tall Portrait Smartphone Blocks (1.png, 2.png, 5.png) */}
                         <div className="portrait-top-row">
                           {featuredImages.map((img) => {
-                            const globalIdx = BIOSYNC_IMAGES.findIndex((b) => b.id === img.id);
                             return (
                               <div
                                 key={img.id}
                                 className="portrait-device-card"
-                                onClick={() => openModal(globalIdx)}
-                                title={`Click to zoom: ${img.title}`}
                               >
                                 <div className="device-screen-inner">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -827,124 +730,6 @@ export default function StageFour() {
         </div>
 
         {/* =========================================================================
-          FULL-SCREEN INTERACTIVE LIGHTBOX ZOOM MODAL
-          ========================================================================= */}
-        {isModalOpen && (
-          <div
-            className="lightbox-overlay"
-            onClick={closeModal}
-            role="dialog"
-            aria-modal="true"
-          >
-            {/* Top Control Bar */}
-            <div
-              className="lightbox-top-bar"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="lightbox-title-text">
-                <span className="brand-pill">BioSync</span>
-                <span className="sep">/</span>
-                <span className="curr-name">
-                  {BIOSYNC_IMAGES[modalIndex].title} (0{modalIndex + 1} of 0{BIOSYNC_IMAGES.length})
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeModal}
-                className="lightbox-close-btn"
-                aria-label="Close Lightbox"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Interactive Zoom Canvas Stage */}
-            <div
-              className="lightbox-stage"
-              onWheel={handleModalWheel}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onClick={closeModal}
-            >
-              <div
-                className="lightbox-img-wrapper"
-                onClick={handleImageClickToggleZoom}
-                style={{
-                  transform: `translate(${panPos.x}px, ${panPos.y}px) scale(${zoomScale})`,
-                  cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={BIOSYNC_IMAGES[modalIndex].src}
-                  alt={BIOSYNC_IMAGES[modalIndex].title}
-                  className="lightbox-image"
-                  draggable={false}
-                />
-              </div>
-            </div>
-
-            {/* Bottom Floating Control Pill */}
-            <div
-              className="lightbox-bottom-dock"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={prevModalImage}
-                className="dock-btn"
-                title="Previous screen (←)"
-              >
-                ◀ Prev
-              </button>
-              <div className="dock-divider" />
-              <button
-                type="button"
-                onClick={() => {
-                  setZoomScale((prev) => Math.max(1, prev - 0.5));
-                  if (zoomScale <= 1.5) setPanPos({ x: 0, y: 0 });
-                }}
-                className="dock-btn"
-                title="Zoom Out"
-              >
-                −
-              </button>
-              <span className="dock-zoom-text">{Math.round(zoomScale * 100)}%</span>
-              <button
-                type="button"
-                onClick={() => setZoomScale((prev) => Math.min(3.5, prev + 0.5))}
-                className="dock-btn"
-                title="Zoom In"
-              >
-                +
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setZoomScale(1);
-                  setPanPos({ x: 0, y: 0 });
-                }}
-                className="dock-btn-reset"
-                title="Reset Zoom"
-              >
-                Reset
-              </button>
-              <div className="dock-divider" />
-              <button
-                type="button"
-                onClick={nextModalImage}
-                className="dock-btn"
-                title="Next screen (→)"
-              >
-                Next ▶
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* =========================================================================
           COMPONENT STYLES (Clean, Symmetric, Responsive)
           ========================================================================= */}
         <style jsx>{`
@@ -1010,7 +795,7 @@ export default function StageFour() {
           border: 1.5px solid rgba(255, 255, 255, 0.25);
           border-radius: 24px;
           overflow: hidden;
-          cursor: pointer;
+          cursor: default;
           box-shadow: 0 18px 48px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;
@@ -1541,171 +1326,6 @@ export default function StageFour() {
         .lang-item-row:hover .lang-pct-text,
         .lang-item-row.active-row .lang-pct-text {
           color: #ffffff;
-        }
-
-        /* -------------------------------------------------------------
-           LIGHTBOX MODAL & CONTROLS
-           ------------------------------------------------------------- */
-        .lightbox-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 100;
-          background: rgba(0, 0, 0, 0.94);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          user-select: none;
-        }
-
-        .lightbox-top-bar {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 64px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 clamp(20px, 4vw, 40px);
-          z-index: 105;
-          background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
-        }
-
-        .lightbox-title-text {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 13px;
-        }
-
-        .brand-pill {
-          font-family: 'Playfair Display', serif;
-          font-style: italic;
-          font-weight: 600;
-          font-size: 16px;
-          color: #ffffff;
-        }
-
-        .sep {
-          color: rgba(255, 255, 255, 0.3);
-        }
-
-        .curr-name {
-          color: rgba(255, 255, 255, 0.7);
-        }
-
-        .lightbox-close-btn {
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          color: #ffffff;
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          font-size: 16px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: background-color 0.2s ease, transform 0.2s ease;
-        }
-
-        .lightbox-close-btn:hover {
-          background-color: #ffffff;
-          color: #000000;
-          transform: scale(1.08);
-        }
-
-        .lightbox-stage {
-          width: 100vw;
-          height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .lightbox-img-wrapper {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          max-width: 90vw;
-          max-height: 82vh;
-          transition: transform 0.08s ease-out;
-          will-change: transform;
-        }
-
-        .lightbox-image {
-          max-width: 90vw;
-          max-height: 82vh;
-          object-fit: contain;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 8px;
-        }
-
-        .lightbox-bottom-dock {
-          position: absolute;
-          bottom: 24px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 18px;
-          background: rgba(18, 18, 24, 0.9);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 30px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
-          backdrop-filter: blur(12px);
-          z-index: 105;
-        }
-
-        .dock-btn {
-          background: transparent;
-          border: none;
-          color: rgba(255, 255, 255, 0.85);
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 13px;
-          font-weight: 500;
-          padding: 4px 10px;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: color 0.15s ease, transform 0.15s ease;
-        }
-
-        .dock-btn:hover {
-          color: #ffffff;
-          transform: scale(1.06);
-        }
-
-        .dock-btn-reset {
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          color: #ffffff;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 11px;
-          font-weight: 500;
-          padding: 3px 8px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-
-        .dock-divider {
-          width: 1px;
-          height: 18px;
-          background: rgba(255, 255, 255, 0.2);
-        }
-
-        .dock-zoom-text {
-          font-family: ui-monospace, monospace;
-          font-size: 11.5px;
-          color: rgba(255, 255, 255, 0.6);
-          min-width: 40px;
-          text-align: center;
         }
 
         /* -------------------------------------------------------------
