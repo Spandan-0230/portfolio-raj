@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import PureImagePopup from "./PureImagePopup";
 import { StageFiveLeftPane, StageFiveRightPane } from "./StageFive";
 import { StageSixLeftPane, StageSixRightPane } from "./StageSix";
 
@@ -226,6 +227,7 @@ export default function StageFour() {
   }, []);
 
   // Smooth Elevator Scroll Transition: Stage Four -> Stage Five -> Stage Six
+  const [popupImg, setPopupImg] = useState<{ src: string; alt: string } | null>(null);
   // The center vertical divider line stays 100% stationary, while both left and right sides move UPWARD on scroll.
   useEffect(() => {
     const track = trackRef.current;
@@ -539,6 +541,7 @@ export default function StageFour() {
                               <div
                                 key={img.id}
                                 className="portrait-device-card"
+                                onClick={() => setPopupImg({ src: img.src, alt: img.title })}
                               >
                                 <div className="device-screen-inner">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -549,17 +552,18 @@ export default function StageFour() {
                                   />
                                 </div>
                               </div>
-                      );
-                  })}
-                    </div>
+                            );
+                          })}
+                        </div>
 
                         {/* See More Action (Matching provided UI: text + down chevron) */}
-                <div className="see-more-container">
-                        <button
-                          type="button"
-                          className="see-more-btn"
-                          title="See more BioSync screenshots"
-                        >
+                        <div className="see-more-container">
+                          <button
+                            type="button"
+                            className="see-more-btn"
+                            title="See more BioSync screenshots"
+                            onClick={() => setPopupImg({ src: BIOSYNC_IMAGES[2].src, alt: BIOSYNC_IMAGES[2].title })}
+                          >
                     <span className="see-more-text">See more</span>
                     <svg
                       className="see-more-icon"
@@ -729,6 +733,14 @@ export default function StageFour() {
           </div>
         </div>
 
+        {/* Pure Image Pop-up (No UI elements, no background block) */}
+        <PureImagePopup
+          isOpen={popupImg !== null}
+          onClose={() => setPopupImg(null)}
+          src={popupImg?.src || ""}
+          alt={popupImg?.alt || ""}
+        />
+
         {/* =========================================================================
           COMPONENT STYLES (Clean, Symmetric, Responsive)
           ========================================================================= */}
@@ -795,7 +807,7 @@ export default function StageFour() {
           border: 1.5px solid rgba(255, 255, 255, 0.25);
           border-radius: 24px;
           overflow: hidden;
-          cursor: default;
+          cursor: zoom-in;
           box-shadow: 0 18px 48px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;

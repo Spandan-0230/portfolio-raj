@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import PureImagePopup from "./PureImagePopup";
 
 export interface LedgerImage {
   id: number;
@@ -214,6 +215,7 @@ function FeatureBulletIcon() {
 // Stage Six Left Pane: Landscape Showcase with 4 True-Sized Thumbnails + See More Action
 export function StageSixLeftPane() {
   const [activeIdx, setActiveIdx] = useState<number>(0);
+  const [popupImg, setPopupImg] = useState<{ src: string; alt: string } | null>(null);
 
   const activeImage = LEDGER_IMAGES[activeIdx];
 
@@ -253,6 +255,7 @@ export function StageSixLeftPane() {
       <div className="main-screen-wrapper">
         <div
           className="main-screen-card"
+          onClick={() => setPopupImg({ src: activeImage.src, alt: activeImage.title })}
           style={{
             aspectRatio: `${activeImage.width} / ${activeImage.height}`,
           }}
@@ -278,9 +281,12 @@ export function StageSixLeftPane() {
               key={img.id}
               className={`thumb-card ${isActive ? "active-thumb" : ""}`}
               onMouseEnter={() => setActiveIdx(idx)}
-              onClick={() => setActiveIdx(idx)}
+              onClick={() => {
+                setActiveIdx(idx);
+                setPopupImg({ src: img.src, alt: img.title });
+              }}
               style={{ aspectRatio: `${img.width} / ${img.height}` }}
-              title={`${img.title} (Hover to preview)`}
+              title={`${img.title} (Click to view)`}
             >
               <div className="thumb-screen-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -297,6 +303,7 @@ export function StageSixLeftPane() {
           type="button"
           className="see-more-btn"
           title="See more Ledger screenshots"
+          onClick={() => setPopupImg({ src: LEDGER_IMAGES[4].src, alt: LEDGER_IMAGES[4].title })}
         >
           <span className="see-more-text">See more</span>
           <svg
@@ -318,6 +325,14 @@ export function StageSixLeftPane() {
           </svg>
         </button>
       </div>
+
+      {/* Pure Image Pop-up (No UI elements, no background block) */}
+      <PureImagePopup
+        isOpen={popupImg !== null}
+        onClose={() => setPopupImg(null)}
+        src={popupImg?.src || ""}
+        alt={popupImg?.alt || ""}
+      />
 
       <style jsx>{`
         .landscape-showcase-container {
@@ -437,7 +452,7 @@ export function StageSixLeftPane() {
           border: 1.5px solid rgba(255, 255, 255, 0.28);
           border-radius: 16px;
           overflow: hidden;
-          cursor: default;
+          cursor: zoom-in;
           box-shadow: 0 22px 56px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;

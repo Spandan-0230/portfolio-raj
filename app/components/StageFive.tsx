@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import PureImagePopup from "./PureImagePopup";
 
 export interface FloatViewImage {
   id: number;
@@ -150,6 +151,7 @@ function FeatureBulletIcon() {
 // Stage Five Left Pane: Dynamic Landscape Showcase with Auto-adjusting Frame & Hover Switcher
 export function StageFiveLeftPane() {
   const [activeIdx, setActiveIdx] = useState<number>(0);
+  const [isPopupOpen, setIsPopupOpen] = useState<boolean>(false);
   const activeImage = FLOATVIEW_IMAGES[activeIdx];
 
   return (
@@ -185,6 +187,7 @@ export function StageFiveLeftPane() {
       <div className="main-screen-wrapper">
         <div
           className="main-screen-card"
+          onClick={() => setIsPopupOpen(true)}
           style={{
             aspectRatio: `${activeImage.width} / ${activeImage.height}`,
           }}
@@ -210,9 +213,12 @@ export function StageFiveLeftPane() {
               key={img.id}
               className={`thumb-card ${isActive ? "active-thumb" : ""}`}
               onMouseEnter={() => setActiveIdx(idx)}
-              onClick={() => setActiveIdx(idx)}
+              onClick={() => {
+                setActiveIdx(idx);
+                setIsPopupOpen(true);
+              }}
               style={{ aspectRatio: `${img.width} / ${img.height}` }}
-              title={`${img.title} (Hover to preview)`}
+              title={`${img.title} (Click to view)`}
             >
               <div className="thumb-screen-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -222,6 +228,14 @@ export function StageFiveLeftPane() {
           );
         })}
       </div>
+
+      {/* Pure Image Pop-up (No UI elements, no background block) */}
+      <PureImagePopup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        src={activeImage.src}
+        alt={activeImage.title}
+      />
 
         <style jsx>{`
         .landscape-showcase-container {
@@ -340,7 +354,7 @@ export function StageFiveLeftPane() {
           border: 1.5px solid rgba(255, 255, 255, 0.28);
           border-radius: 16px;
           overflow: hidden;
-          cursor: default;
+          cursor: zoom-in;
           box-shadow: 0 22px 56px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;
