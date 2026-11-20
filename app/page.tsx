@@ -281,25 +281,25 @@ export default function Home() {
       const p = currentProgress.current;
 
       // Choreograph 3 Hero Sequence Phases:
-      // Phase 1: SPANDAN BOLE (Delayed with a clean gap after "Welcome" clears: 0.06 -> 0.28)
-      // Gap: 0.00 -> 0.06 (Allows "Welcome" to dissolve completely into clear scene)
-      // Fade in smoothly: 0.06 -> 0.11, hold until 0.22, then fade & blur out to 0.28
+      // Phase 1: SPANDAN BOLE (Delayed with a clean gap after "Welcome" clears: 0.09 -> 0.28)
+      // Gap: 0.00 -> 0.09 (Allows "Welcome" to dissolve completely into clear scene with breathing room)
+      // Fade in smoothly: 0.09 -> 0.14, hold until 0.23, then fade & blur out to 0.28
       let t1Op = 0, t1Tr = 0, t1Bl = 0;
-      if (p < 0.06) {
+      if (p < 0.09) {
         t1Op = 0;
         t1Tr = 18;
         t1Bl = 5;
-      } else if (p < 0.11) {
-        const t = (p - 0.06) / 0.05;
+      } else if (p < 0.14) {
+        const t = (p - 0.09) / 0.05;
         t1Op = t;
         t1Tr = (1 - t) * 18;
         t1Bl = (1 - t) * 5;
-      } else if (p <= 0.22) {
+      } else if (p <= 0.23) {
         t1Op = 1;
         t1Tr = 0;
         t1Bl = 0;
       } else if (p < 0.28) {
-        const t = (p - 0.22) / 0.06;
+        const t = (p - 0.23) / 0.05;
         t1Op = 1 - t;
         t1Tr = -t * 26;
         t1Bl = t * 6;

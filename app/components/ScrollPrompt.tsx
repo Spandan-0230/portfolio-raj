@@ -13,7 +13,7 @@ export default function ScrollPrompt() {
 
     // Direct, zero-rerender scroll detection for maximum 120fps efficiency
     const updateVisibility = () => {
-      const isScrolled = window.scrollY > 8;
+      const isScrolled = window.scrollY > 4;
       if (isScrolled) {
         if (welcomeEl && !welcomeEl.classList.contains("hidden")) {
           welcomeEl.classList.add("hidden");
@@ -124,10 +124,10 @@ export default function ScrollPrompt() {
           opacity: 1;
           visibility: visible;
           filter: blur(0px);
-          transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-            transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-            filter 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-            visibility 0.45s;
+          transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+            filter 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+            visibility 0.3s;
           will-change: opacity, transform, filter;
           pointer-events: auto;
         }
