@@ -30,14 +30,22 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (secrets and keys strictly excluded)
 .env*
+.env
+.env.local
+.env.production
+.env.development
+!.env.example
 
 # vercel
 .vercel
 
 # private assets
 Prvt/
+[Pp]rvt/
+*/Prvt/
+*/[Pp]rvt/
 
 # typescript
 *.tsbuildinfo

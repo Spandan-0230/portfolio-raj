@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import GithubActivity from "./components/GithubActivity";
 import WorksShowcase from "./components/WorksShowcase";
-import StageFour from "./components/StageFour";
+import ProjectsShowcase from "./components/ProjectsShowcase";
 import LanguageShowcase from "./components/LanguageShowcase";
 import HeadTrackingSection from "./components/HeadTrackingSection";
 import SmoothScrollDamper from "./components/SmoothScrollDamper";
@@ -646,8 +646,8 @@ export default function Home() {
       {/* Page 3: My Works Showcase Section */}
       <WorksShowcase />
 
-      {/* Page 4: Cinematic Ambient Stage (Blank Page 3 background) */}
-      <StageFour />
+      {/* Page 4: Projects Showcase (BioSync, FloatView, Ledger) */}
+      <ProjectsShowcase />
 
       {/* Page 5: Languages Showcase Section */}
       <LanguageShowcase />

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import PureImagePopup from "./PureImagePopup";
-import { LedgerImage } from "./StageSix";
+import { LedgerImage } from "./LedgerShowcase";
 import { lockBodyScroll } from "../utils/scrollLock";
 
 interface LedgerGalleryModalProps {

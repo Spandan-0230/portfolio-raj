@@ -2,8 +2,16 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, email, message } = body;
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON request body." },
+        { status: 400 }
+      );
+    }
+    const { name, email, message } = body || {};
 
     // 1. Validate email
     if (!email || typeof email !== "string") {

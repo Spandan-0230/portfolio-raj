@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import PureImagePopup from "./PureImagePopup";
 import BioSyncGalleryModal from "./BioSyncGalleryModal";
-import { StageFiveLeftPane, StageFiveRightPane } from "./StageFive";
-import { StageSixLeftPane, StageSixRightPane } from "./StageSix";
+import { StageFiveLeftPane, StageFiveRightPane } from "./FloatViewShowcase";
+import { StageSixLeftPane, StageSixRightPane } from "./LedgerShowcase";
 
 interface ProjectImage {
   id: number;
@@ -193,7 +193,7 @@ function FeatureBulletIcon() {
   );
 }
 
-export default function StageFour() {
+export default function ProjectsShowcase() {
   const trackRef = useRef<HTMLDivElement>(null);
 
   // Elevator Scroll Animation Layer Refs
