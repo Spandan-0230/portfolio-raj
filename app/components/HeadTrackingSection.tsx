@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
+import dynamic from "next/dynamic";
+
+const RobotViewer = dynamic(() => import("./RobotViewer"), {
+  ssr: false,
+});
 
 // ============================================================================
 // DUAL BLOCK GLASS SECTION SETTINGS (Adjust with single numbers below)
@@ -8,16 +13,17 @@ import React, { useEffect, useRef, useState } from "react";
 export const GLASS_CONFIG = {
   // 1. Transparency / Background Darkness:
   //    0.0 = completely transparent (100% see-through), 1.0 = solid black
-  bgOpacity: 0,
+  bgOpacity: 0.3,
 
   // 2. Glassmorphism Blur Effect:
   //    0 = razor sharp / no blur, 4-20 = frosted blur
-  blurPx: 0,
+  blurPx: 2,
 
   // 3. Section Border Opacity (white border line brightness):
   borderOpacity: 0.09, // 9% border brightness
 
   // 4. Center Gap Between Left and Right Blocks (in pixels):
+  //    (Center seam is permanently anchored at dead center 50%)
   gapPx: 2, // 2px gap between blocks
 
   // 5. Corner Radii:
@@ -27,261 +33,22 @@ export const GLASS_CONFIG = {
   innerRadiusPx: 0, // 0 = sharp corners in the middle seam!
 
   // 6. Section 4-Side Position / Size Insets (Adjust directly with single numbers in px):
+  //    Adjusting leftPx or rightPx resizes left-to-middle and right-to-middle without moving the center seam!
   topPx: 75,     // Distance from screen top
-  bottomPx: 35,  // Distance from screen bottom
-  leftPx: 20,    // Distance from left margin
-  rightPx: 20,   // Distance from right margin
-
-  // 7. Max Width of the Dual Section Container:
-  maxWidth: "100%",
+  bottomPx: 65,  // Distance from screen bottom
+  leftPx: 155,    // Left block outer edge distance from left margin
+  rightPx: 100,   // Right block outer edge distance from right margin
 };
 
-const TOTAL_FRAMES = 101;
-const LERP_FACTOR = 0.085; // Organic neck muscle inertia
-
-// Persistent frame cache (outside component lifecycle to survive re-renders)
-const frameCache: (HTMLImageElement | null)[] = new Array(TOTAL_FRAMES + 1).fill(null);
-const frameLoaded: boolean[] = new Array(TOTAL_FRAMES + 1).fill(false);
-const frameLoading: boolean[] = new Array(TOTAL_FRAMES + 1).fill(false);
-
-function loadFrame(i: number, onLoaded?: () => void) {
-  if (i < 1 || i > TOTAL_FRAMES) return;
-  if (frameLoaded[i] && frameCache[i]) {
-    if (onLoaded) onLoaded();
-    return;
-  }
-  if (frameLoading[i]) return;
-
-  frameLoading[i] = true;
-  const img = new Image();
-
-  img.onload = () => {
-    frameCache[i] = img;
-    frameLoaded[i] = true;
-    frameLoading[i] = false;
-    if (onLoaded) onLoaded();
-  };
-
-  img.onerror = () => {
-    frameLoading[i] = false;
-  };
-
-  img.src = `/head_frames/frame_${String(i).padStart(5, "0")}.webp`;
-}
-
-function getNearestFrame(target: number): HTMLImageElement | null {
-  const idx = Math.max(1, Math.min(TOTAL_FRAMES, Math.round(target)));
-  if (frameLoaded[idx] && frameCache[idx]) {
-    return frameCache[idx];
-  }
-
-  for (let d = 1; d < TOTAL_FRAMES; d++) {
-    const prev = idx - d;
-    if (prev >= 1 && frameLoaded[prev] && frameCache[prev]) {
-      return frameCache[prev];
-    }
-    const next = idx + d;
-    if (next <= TOTAL_FRAMES && frameLoaded[next] && frameCache[next]) {
-      return frameCache[next];
-    }
-  }
-
-  // Fallback to center frame (51) or first frame
-  return frameCache[51] || frameCache[1] || null;
-}
-
-function renderImage(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  canvasW: number,
-  canvasH: number
-) {
-  const iw = img.naturalWidth || 1920;
-  const ih = img.naturalHeight || 1080;
-
-  // Fit within canvas while preserving aspect ratio, perfectly respecting margin pillars
-  const scale = Math.min(canvasW / iw, canvasH / ih);
-  const rw = Math.round(iw * scale);
-  const rh = Math.round(ih * scale);
-  const ox = Math.round((canvasW - rw) / 2);
-  const oy = Math.round((canvasH - rh) / 2);
-
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, canvasW, canvasH);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(img, ox, oy, rw, rh);
-}
-
 export default function HeadTrackingSection() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Normalized progress: 0.0 (full left) -> 0.5 (center) -> 1.0 (full right)
-  // Default to 0.5 (looking straight ahead at the user)
-  const targetProgress = useRef<number>(0.5);
-  const currentProgress = useRef<number>(0.5);
-  const lastDrawnFrame = useRef<number>(-1);
-  const [hasInteracted, setHasInteracted] = useState<boolean>(false);
-
-  // Mouse & Touch Tracking (calibrated strictly to inner margin viewport)
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      const viewport = viewportRef.current || containerRef.current;
-      if (!viewport) return;
-      const rect = viewport.getBoundingClientRect();
-      if (rect.width <= 0) return;
-
-      const normX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      targetProgress.current = normX;
-      if (!hasInteracted) setHasInteracted(true);
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 0) return;
-      const viewport = viewportRef.current || containerRef.current;
-      if (!viewport) return;
-      const rect = viewport.getBoundingClientRect();
-      if (rect.width <= 0) return;
-
-      const touchX = e.touches[0].clientX;
-      const normX = Math.max(0, Math.min(1, (touchX - rect.left) / rect.width));
-      targetProgress.current = normX;
-      if (!hasInteracted) setHasInteracted(true);
-    };
-
-    const onMouseLeave = () => {
-      // Gently return to center gaze when mouse leaves the viewport
-      targetProgress.current = 0.5;
-    };
-
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("touchstart", onTouchMove, { passive: true });
-    document.documentElement.addEventListener("mouseleave", onMouseLeave);
-
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchstart", onTouchMove);
-      document.documentElement.removeEventListener("mouseleave", onMouseLeave);
-    };
-  }, [hasInteracted]);
-
-  // Canvas Lifecycle & 60fps Smooth Damping Loop
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d", { alpha: false });
-    if (!ctx) return;
-
-    let rafId: number;
-
-    const updateSize = () => {
-      const viewport = viewportRef.current || containerRef.current;
-      if (!viewport) return;
-
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = viewport.clientWidth;
-      const h = viewport.clientHeight;
-      if (w <= 0 || h <= 0) return;
-
-      const targetW = Math.round(w * dpr);
-      const targetH = Math.round(h * dpr);
-
-      if (canvas.width !== targetW || canvas.height !== targetH) {
-        canvas.width = targetW;
-        canvas.height = targetH;
-        lastDrawnFrame.current = -1; // Force redraw on resize
-      }
-    };
-
-    const draw = (frameIdx: number) => {
-      const img = getNearestFrame(frameIdx);
-      if (img) {
-        renderImage(ctx, img, canvas.width, canvas.height);
-        lastDrawnFrame.current = frameIdx;
-      }
-    };
-
-    // 1. Immediately load and draw the Center frame (Frame 51) so there is zero flash
-    loadFrame(51, () => {
-      updateSize();
-      draw(51);
-    });
-
-    // 2. Preload near-center frames first (frames 35 to 65)
-    for (let i = 35; i <= 65; i++) {
-      loadFrame(i);
-    }
-
-    // 3. Preload all remaining frames in background batches
-    let batchIdx = 1;
-    const preloadRest = () => {
-      let count = 0;
-      while (batchIdx <= TOTAL_FRAMES && count < 8) {
-        loadFrame(batchIdx);
-        batchIdx++;
-        count++;
-      }
-      if (batchIdx <= TOTAL_FRAMES) {
-        setTimeout(preloadRest, 30);
-      }
-    };
-    setTimeout(preloadRest, 50);
-
-    const onResize = () => {
-      updateSize();
-      const currentIntFrame = Math.round(1 + currentProgress.current * (TOTAL_FRAMES - 1));
-      draw(currentIntFrame);
-    };
-
-    window.addEventListener("resize", onResize, { passive: true });
-    window.addEventListener("orientationchange", onResize, { passive: true });
-
-    updateSize();
-
-    // 4. Smooth Animation Loop with Organic Inertia
-    const loop = () => {
-      const diff = targetProgress.current - currentProgress.current;
-      currentProgress.current += diff * LERP_FACTOR;
-
-      // Progress 0.0 -> Frame 1, 0.5 -> Frame 51, 1.0 -> Frame 101
-      const frameFloat = 1 + currentProgress.current * (TOTAL_FRAMES - 1);
-      const frameInt = Math.max(1, Math.min(TOTAL_FRAMES, Math.round(frameFloat)));
-
-      if (frameInt !== lastDrawnFrame.current) {
-        draw(frameInt);
-      }
-
-      rafId = requestAnimationFrame(loop);
-    };
-
-    rafId = requestAnimationFrame(loop);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
-    };
-  }, []);
-
   return (
     <section
-      ref={containerRef}
       id="character"
       className="head-tracking-section"
-      aria-label="Interactive Character Showcase"
+      aria-label="Interactive Showcase Section"
     >
-      <div ref={viewportRef} className="head-tracking-viewport">
-        <canvas
-          ref={canvasRef}
-          className="head-tracking-canvas"
-        />
-
-        {/* Dual Symmetrical Glass Blocks (Left & Right with Small Center Gap) */}
+      <div className="head-tracking-viewport">
+        {/* Dual Symmetrical Glass Blocks (Left & Right with Center Gap anchored at 50%) */}
         <div
           className="glass-sections-container"
           aria-hidden="true"
@@ -297,24 +64,16 @@ export default function HeadTrackingSection() {
               "--glass-bottom": `${GLASS_CONFIG.bottomPx}px`,
               "--glass-left": `${GLASS_CONFIG.leftPx}px`,
               "--glass-right": `${GLASS_CONFIG.rightPx}px`,
-              "--glass-max-width": GLASS_CONFIG.maxWidth,
             } as React.CSSProperties
           }
         >
-          {/* Left Block of Section */}
-          <div className="glass-block glass-block-left" />
+          {/* Left Block of Section (resizes from leftPx to dead center) */}
+          <div className="glass-block glass-block-left">
+            <RobotViewer />
+          </div>
 
-          {/* Right Block of Section */}
+          {/* Right Block of Section (resizes from rightPx to dead center) */}
           <div className="glass-block glass-block-right" />
-        </div>
-
-        {/* Subtle Interactive Instruction Pill */}
-        <div
-          className={`interaction-hint ${hasInteracted ? "faded" : ""}`}
-          aria-hidden="true"
-        >
-          <span className="hint-bullet" />
-          <span className="hint-text">Move cursor to track</span>
         </div>
       </div>
 
@@ -342,29 +101,13 @@ export default function HeadTrackingSection() {
           align-items: center;
           justify-content: center;
           overflow: hidden;
+          background-color: #000000;
         }
 
-        .head-tracking-canvas {
-          display: block;
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          pointer-events: none;
-          user-select: none;
-        }
-
-        /* Dual Symmetrical Glass Blocks Container */
+        /* Dual Symmetrical Glass Blocks Container (Spans full viewport, middle seam locked at 50%) */
         .glass-sections-container {
           position: absolute;
-          top: var(--glass-top, 75px);
-          bottom: var(--glass-bottom, 35px);
-          left: var(--glass-left, 20px);
-          right: var(--glass-right, 20px);
-          max-width: var(--glass-max-width, 100%);
-          margin: 0 auto;
-          display: flex;
-          flex-direction: row;
-          gap: var(--glass-gap, 2px);
+          inset: 0;
           pointer-events: none;
           user-select: none;
           z-index: 10;
@@ -372,8 +115,9 @@ export default function HeadTrackingSection() {
 
         /* Shared Glass Block Styling (No white interior, only clean border) */
         .glass-block {
-          flex: 1;
-          height: 100%;
+          position: absolute;
+          top: var(--glass-top, 75px);
+          bottom: var(--glass-bottom, 35px);
           background-color: rgba(0, 0, 0, var(--glass-bg-opacity, 0));
           backdrop-filter: blur(var(--glass-blur, 0px));
           -webkit-backdrop-filter: blur(var(--glass-blur, 0px));
@@ -381,74 +125,27 @@ export default function HeadTrackingSection() {
           box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
           pointer-events: none;
           user-select: none;
-          position: relative;
           overflow: hidden;
         }
 
-        /* Left Block: Outer corners rounded, middle seam corners SHARP (square) */
+        /* Left Block: left edge set by --glass-left; right edge locked at (50% - gap/2) */
         .glass-block-left {
+          left: var(--glass-left, 20px);
+          right: calc(50% + var(--glass-gap, 2px) / 2);
           border-top-left-radius: var(--glass-outer-radius, 20px);
           border-bottom-left-radius: var(--glass-outer-radius, 20px);
           border-top-right-radius: var(--glass-inner-radius, 0px);
           border-bottom-right-radius: var(--glass-inner-radius, 0px);
         }
 
-        /* Right Block: Middle seam corners SHARP (square), outer corners rounded */
+        /* Right Block: left edge locked at (50% + gap/2); right edge set by --glass-right */
         .glass-block-right {
+          left: calc(50% + var(--glass-gap, 2px) / 2);
+          right: var(--glass-right, 20px);
           border-top-left-radius: var(--glass-inner-radius, 0px);
           border-bottom-left-radius: var(--glass-inner-radius, 0px);
           border-top-right-radius: var(--glass-outer-radius, 20px);
           border-bottom-right-radius: var(--glass-outer-radius, 20px);
-        }
-
-        .interaction-hint {
-          position: absolute;
-          bottom: clamp(44px, 7.5vh, 76px);
-          left: 50%;
-          transform: translateX(-50%);
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 18px;
-          border-radius: 999px;
-          background: rgba(0, 0, 0, 0.65);
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          color: rgba(255, 255, 255, 0.75);
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: clamp(11px, 0.95vw, 13px);
-          font-weight: 400;
-          letter-spacing: 0.05em;
-          pointer-events: none;
-          user-select: none;
-          transition: opacity 0.8s ease, transform 0.8s ease;
-          z-index: 20;
-        }
-
-        .interaction-hint.faded {
-          opacity: 0;
-          transform: translate(-50%, 10px);
-        }
-
-        .hint-bullet {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #ffffff;
-          box-shadow: 0 0 8px #ffffff;
-          animation: pulseBullet 2s infinite ease-in-out;
-        }
-
-        @keyframes pulseBullet {
-          0%, 100% {
-            opacity: 0.4;
-            transform: scale(0.9);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.15);
-          }
         }
       `}</style>
     </section>
