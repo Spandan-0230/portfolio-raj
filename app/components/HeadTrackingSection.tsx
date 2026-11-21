@@ -2,6 +2,40 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
+// ============================================================================
+// DUAL BLOCK GLASS SECTION SETTINGS (Adjust with single numbers below)
+// ============================================================================
+export const GLASS_CONFIG = {
+  // 1. Transparency / Background Darkness:
+  //    0.0 = completely transparent (100% see-through), 1.0 = solid black
+  bgOpacity: 0,
+
+  // 2. Glassmorphism Blur Effect:
+  //    0 = razor sharp / no blur, 4-20 = frosted blur
+  blurPx: 0,
+
+  // 3. Section Border Opacity (white border line brightness):
+  borderOpacity: 0.09, // 9% border brightness
+
+  // 4. Center Gap Between Left and Right Blocks (in pixels):
+  gapPx: 2, // 2px gap between blocks
+
+  // 5. Corner Radii:
+  //    outerRadiusPx: radius for the outer corners (in px)
+  //    innerRadiusPx: radius for the middle seam corners (0 = SHARP square corners)
+  outerRadiusPx: 20,
+  innerRadiusPx: 0, // 0 = sharp corners in the middle seam!
+
+  // 6. Section 4-Side Position / Size Insets (Adjust directly with single numbers in px):
+  topPx: 75,     // Distance from screen top
+  bottomPx: 35,  // Distance from screen bottom
+  leftPx: 20,    // Distance from left margin
+  rightPx: 20,   // Distance from right margin
+
+  // 7. Max Width of the Dual Section Container:
+  maxWidth: "100%",
+};
+
 const TOTAL_FRAMES = 101;
 const LERP_FACTOR = 0.085; // Organic neck muscle inertia
 
@@ -247,6 +281,33 @@ export default function HeadTrackingSection() {
           className="head-tracking-canvas"
         />
 
+        {/* Dual Symmetrical Glass Blocks (Left & Right with Small Center Gap) */}
+        <div
+          className="glass-sections-container"
+          aria-hidden="true"
+          style={
+            {
+              "--glass-bg-opacity": GLASS_CONFIG.bgOpacity,
+              "--glass-blur": `${GLASS_CONFIG.blurPx}px`,
+              "--glass-border-opacity": GLASS_CONFIG.borderOpacity,
+              "--glass-gap": `${GLASS_CONFIG.gapPx}px`,
+              "--glass-outer-radius": `${GLASS_CONFIG.outerRadiusPx}px`,
+              "--glass-inner-radius": `${GLASS_CONFIG.innerRadiusPx}px`,
+              "--glass-top": `${GLASS_CONFIG.topPx}px`,
+              "--glass-bottom": `${GLASS_CONFIG.bottomPx}px`,
+              "--glass-left": `${GLASS_CONFIG.leftPx}px`,
+              "--glass-right": `${GLASS_CONFIG.rightPx}px`,
+              "--glass-max-width": GLASS_CONFIG.maxWidth,
+            } as React.CSSProperties
+          }
+        >
+          {/* Left Block of Section */}
+          <div className="glass-block glass-block-left" />
+
+          {/* Right Block of Section */}
+          <div className="glass-block glass-block-right" />
+        </div>
+
         {/* Subtle Interactive Instruction Pill */}
         <div
           className={`interaction-hint ${hasInteracted ? "faded" : ""}`}
@@ -292,9 +353,57 @@ export default function HeadTrackingSection() {
           user-select: none;
         }
 
+        /* Dual Symmetrical Glass Blocks Container */
+        .glass-sections-container {
+          position: absolute;
+          top: var(--glass-top, 75px);
+          bottom: var(--glass-bottom, 35px);
+          left: var(--glass-left, 20px);
+          right: var(--glass-right, 20px);
+          max-width: var(--glass-max-width, 100%);
+          margin: 0 auto;
+          display: flex;
+          flex-direction: row;
+          gap: var(--glass-gap, 2px);
+          pointer-events: none;
+          user-select: none;
+          z-index: 10;
+        }
+
+        /* Shared Glass Block Styling (No white interior, only clean border) */
+        .glass-block {
+          flex: 1;
+          height: 100%;
+          background-color: rgba(0, 0, 0, var(--glass-bg-opacity, 0));
+          backdrop-filter: blur(var(--glass-blur, 0px));
+          -webkit-backdrop-filter: blur(var(--glass-blur, 0px));
+          border: 1px solid rgba(255, 255, 255, var(--glass-border-opacity, 0.09));
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+          pointer-events: none;
+          user-select: none;
+          position: relative;
+          overflow: hidden;
+        }
+
+        /* Left Block: Outer corners rounded, middle seam corners SHARP (square) */
+        .glass-block-left {
+          border-top-left-radius: var(--glass-outer-radius, 20px);
+          border-bottom-left-radius: var(--glass-outer-radius, 20px);
+          border-top-right-radius: var(--glass-inner-radius, 0px);
+          border-bottom-right-radius: var(--glass-inner-radius, 0px);
+        }
+
+        /* Right Block: Middle seam corners SHARP (square), outer corners rounded */
+        .glass-block-right {
+          border-top-left-radius: var(--glass-inner-radius, 0px);
+          border-bottom-left-radius: var(--glass-inner-radius, 0px);
+          border-top-right-radius: var(--glass-outer-radius, 20px);
+          border-bottom-right-radius: var(--glass-outer-radius, 20px);
+        }
+
         .interaction-hint {
           position: absolute;
-          bottom: clamp(28px, 4.5vh, 44px);
+          bottom: clamp(44px, 7.5vh, 76px);
           left: 50%;
           transform: translateX(-50%);
           display: inline-flex;
@@ -314,7 +423,7 @@ export default function HeadTrackingSection() {
           pointer-events: none;
           user-select: none;
           transition: opacity 0.8s ease, transform 0.8s ease;
-          z-index: 10;
+          z-index: 20;
         }
 
         .interaction-hint.faded {
