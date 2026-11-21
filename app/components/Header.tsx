@@ -11,7 +11,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "hero", label: "Home" },
   { id: "activity", label: "Activity" },
   { id: "works", label: "Work" },
-  { id: "languages", label: "Languages" },
+  { id: "contact", label: "Contact" },
 ];
 
 export default function Header() {
@@ -32,10 +32,10 @@ export default function Header() {
       const winH = window.innerHeight;
       const actEl = document.getElementById("activity");
       const worksEl = document.getElementById("works");
-      const langEl = document.getElementById("languages");
+      const charEl = document.getElementById("character");
 
-      if (langEl && scrollY >= langEl.offsetTop - winH * 0.4) {
-        setActiveSection("languages");
+      if (charEl && scrollY >= charEl.offsetTop - winH * 0.4) {
+        setActiveSection("contact");
       } else if (worksEl && scrollY >= worksEl.offsetTop - winH * 0.4) {
         setActiveSection("works");
       } else if (actEl && scrollY >= actEl.offsetTop - winH * 0.4) {
@@ -61,6 +61,11 @@ export default function Header() {
       return;
     }
 
+    if (id === "contact") {
+      handleContactClick();
+      return;
+    }
+
     const el = document.getElementById(id);
     if (el) {
       const totalScrollable = el.offsetHeight - window.innerHeight;
@@ -74,7 +79,11 @@ export default function Header() {
   };
 
   const handleContactClick = () => {
-    window.location.href = "mailto:spandanbole777@gmail.com";
+    if (typeof window === "undefined") return;
+    const charEl = document.getElementById("character");
+    if (charEl) {
+      window.scrollTo({ top: charEl.offsetTop, behavior: "smooth" });
+    }
   };
 
   return (
@@ -126,16 +135,16 @@ export default function Header() {
         </nav>
 
         {/* =====================================================================
-            3. RIGHT ACTION: "Contact Us" Glowing White Button
+            3. RIGHT ACTION: "Contact" Outlined Button
             ===================================================================== */}
         <div className="header-right">
           <button
             type="button"
             onClick={handleContactClick}
             className="contact-btn"
-            aria-label="Contact Us"
+            aria-label="Contact"
           >
-            <span>Contact Us</span>
+            <span>Contact</span>
           </button>
         </div>
       </div>
