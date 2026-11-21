@@ -29,11 +29,11 @@ export const ROBOT_CONFIG = {
 
   // 4. Head Tracking Sensitivity:
   //    Max horizontal head turn in radians (0.65 rad ≈ 37 degrees)
-  maxYawRad: 0.70,
+  maxYawRad: 0.40,
   //    Max vertical head nod in radians (0.35 rad ≈ 20 degrees)
-  maxPitchRad: 0.7,
+  maxPitchRad: 0.4,
   //    Smooth interpolation / damping speed (0.05 = butter smooth/floaty, 0.12 = snappy)
-  smoothDamping: 0.08,
+  smoothDamping: 0.1,
 
   // 5. Tracking Direction Inversion:
   //    invertYaw: false = cursor moves right -> robot turns head right
