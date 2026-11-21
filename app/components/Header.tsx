@@ -11,7 +11,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: "hero", label: "Home" },
   { id: "activity", label: "Activity" },
   { id: "works", label: "Work" },
-  { id: "contact", label: "Contact" },
 ];
 
 export default function Header() {
@@ -135,14 +134,14 @@ export default function Header() {
         </nav>
 
         {/* =====================================================================
-            3. RIGHT ACTION: "Contact" Outlined Button
+            3. RIGHT ACTION: "contact me" Outlined Button
             ===================================================================== */}
         <div className="header-right">
           <button
             type="button"
             onClick={handleContactClick}
             className="contact-btn"
-            aria-label="Contact"
+            aria-label="contact me"
           >
             <span>Contact</span>
           </button>
