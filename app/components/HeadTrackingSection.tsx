@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import ContactForm from "./ContactForm";
 
 const RobotViewer = dynamic(() => import("./RobotViewer"), {
   ssr: false,
 });
 
 // ============================================================================
-// BACKGROUND VIDEO / MEDIA CONFIGURATION (Adjust with single numbers/settings below)
+// BACKGROUND IMAGE CONFIGURATION (Adjust with single numbers/settings below)
 // ============================================================================
 export const BACKGROUND_CONFIG = {
-  // 1. Video source path (served from /public folder)
-  videoSrc: "/Rain_falling_on_window_1080p.mp4",
+  // 1. Image path (served from /public folder)
+  imageSrc: "/7.jpg",
 
   // 2. Object Fit Mode:
   //    "cover"   = fills the entire area between the side margins (cinematic background)
@@ -25,36 +26,32 @@ export const BACKGROUND_CONFIG = {
   // 4. Background Opacity (0.0 = invisible / black, 1.0 = full brightness):
   opacity: 1.0,
 
-  // 5. Dark Overlay Darkness (0.0 = pure video, 0.15 = 15% dark tint for contrast):
+  // 5. Dark Overlay Darkness (0.0 = pure image, 0.10 = 10% dark tint for contrast):
   darkOverlay: 0.10,
 
   // 6. Blur Effect on Background (0 = crisp sharp, 4-10 = soft ambient blur):
   blurPx: 0,
-
-  // 7. Video Playback Speed (1.0 = normal, 0.75 = slower rain, 1.25 = faster):
-  playbackRate: 1.0,
 };
 
 // ============================================================================
 // FREESTANDING 3D ROBOT PLACEMENT CONFIGURATION
 // Position and size the 3D robot cleanly with single numbers (in % and px)
+// Anchored at the marked bottom-right area of the Contact Card
 // ============================================================================
 export const ROBOT_PLACEMENT_CONFIG = {
   // 1. Horizontal Position:
-  //    Percentage from left margin pillar (0% places it directly inside the circled zone)
-  leftPercent: 0,
-  //    Fine-tune offset in pixels (+ shifts right, - shifts left):
-  leftOffsetPx: 0,
+  //    Offset from the card's right border (in px)
+  //    Negative values shift outwards / rightward into the marked area:
+  rightOffsetPx: -125,
 
-  // 2. Vertical Position from Floor:
-  //    Percentage from bottom edge of viewport:
-  bottomPercent: 0,
-  //    Fine-tune offset in pixels (+ shifts up, - shifts down):
-  bottomOffsetPx: 10,
+  // 2. Vertical Position:
+  //    Offset from the card's bottom edge (in px)
+  //    Negative values shift downwards to floor level:
+  bottomOffsetPx: -15,
 
   // 3. Stage Size (Width and Height framing the 3D robot, in px):
-  widthPx: 320,
-  heightPx: 400,
+  widthPx: 220,
+  heightPx: 240,
 };
 
 // ============================================================================
@@ -73,7 +70,7 @@ export const GLASS_CONFIG = {
   borderOpacity: 0.09, // 9% border brightness
 
   // 4. Center Gap from the 50% seam line (in pixels):
-  gapPx: 2, // 2px gap from middle
+  gapPx: 9, // 2px gap from middle
 
   // 5. Corner Radii:
   //    outerRadiusPx: radius for the outer corners (in px)
@@ -83,40 +80,214 @@ export const GLASS_CONFIG = {
 
   // 6. Section 4-Side Position / Size Insets (Adjust directly with single numbers in px):
   topPx: 75,     // Distance from screen top
-  bottomPx: 65,  // Distance from screen bottom
-  rightPx: 100,   // Right block outer edge distance from right margin
+  bottomPx: 20,  // Distance from screen bottom
+  rightPx: 50,   // Right block outer edge distance from right margin
 };
 
 export default function HeadTrackingSection() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const nameRef = useRef<HTMLHeadingElement>(null);
 
+  // Typing animation state for "Your Vision" (Line 1) and "My \n Architecture" (Line 2)
+  const [text1, setText1] = useState("");
+  const [text2A, setText2A] = useState("");
+  const [text2B, setText2B] = useState("");
+  const [cursorPos, setCursorPos] = useState<"1" | "2A" | "2B">("1");
+
+  // Smooth two-sentence typing & ordered erasing loop:
+  // 1. "Your Vision" types out smoothly
+  // 2. Cursor shifts to Line 2, "My" types out
+  // 3. Enter key: cursor drops to Line 2b, "Architecture" types out
+  // 4. Pause with both sentences fully visible
+  // 5. Line 2b ("Architecture") is erased first, then Line 2a ("My")
+  // 6. Cursor shifts back up to Line 1, "Your Vision" is erased
+  // 7. Pause, then repeat
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = BACKGROUND_CONFIG.playbackRate;
-      videoRef.current.play().catch(() => {
-        // Autoplay may wait for user interaction in certain browser states
-      });
-    }
+    const full1 = "Let’s start a";
+    const full2A = "Worthwhile Build";
+    const full2B = "Togehter.";
+    let timer: NodeJS.Timeout | null = null;
+    let isCancelled = false;
+
+    let step = 0;
+    let index1 = 0;
+    let index2A = 0;
+    let index2B = 0;
+
+    const tick = () => {
+      if (isCancelled) return;
+
+      if (step === 0) {
+        // Typing Sentence 1: "Your Vision"
+        setCursorPos("1");
+        if (index1 < full1.length) {
+          index1++;
+          setText1(full1.slice(0, index1));
+          timer = setTimeout(tick, 75);
+        } else {
+          step = 1;
+          timer = setTimeout(tick, 400); // Pause briefly before switching to Sentence 2
+        }
+      } else if (step === 1) {
+        // Move cursor to Sentence 2, Line A ("My")
+        step = 2;
+        setCursorPos("2A");
+        timer = setTimeout(tick, 100);
+      } else if (step === 2) {
+        // Typing Sentence 2, Line A: "My"
+        setCursorPos("2A");
+        if (index2A < full2A.length) {
+          index2A++;
+          setText2A(full2A.slice(0, index2A));
+          timer = setTimeout(tick, 75);
+        } else {
+          step = 3;
+          timer = setTimeout(tick, 250); // Pause to simulate "Enter" keypress!
+        }
+      } else if (step === 3) {
+        // Press Enter: Move cursor down to Line B
+        step = 4;
+        setCursorPos("2B");
+        timer = setTimeout(tick, 100);
+      } else if (step === 4) {
+        // Typing Sentence 2, Line B: "Architecture"
+        setCursorPos("2B");
+        if (index2B < full2B.length) {
+          index2B++;
+          setText2B(full2B.slice(0, index2B));
+          timer = setTimeout(tick, 75);
+        } else {
+          step = 5;
+          timer = setTimeout(tick, 2800); // Hold both sentences fully visible for reading
+        }
+      } else if (step === 5) {
+        // Begin erasing: 2nd sentence is cleared out first (starting with Line B)
+        step = 6;
+        timer = setTimeout(tick, 40);
+      } else if (step === 6) {
+        // Erasing Line B ("Architecture")
+        setCursorPos("2B");
+        if (index2B > 0) {
+          index2B--;
+          setText2B(full2B.slice(0, index2B));
+          timer = setTimeout(tick, 35);
+        } else {
+          step = 7;
+          timer = setTimeout(tick, 180); // Pause as newline is deleted
+        }
+      } else if (step === 7) {
+        // Move cursor back up to Line A ("My")
+        step = 8;
+        setCursorPos("2A");
+        timer = setTimeout(tick, 80);
+      } else if (step === 8) {
+        // Erasing Line A ("My")
+        setCursorPos("2A");
+        if (index2A > 0) {
+          index2A--;
+          setText2A(full2A.slice(0, index2A));
+          timer = setTimeout(tick, 35);
+        } else {
+          step = 9;
+          timer = setTimeout(tick, 250); // Pause after Sentence 2 is cleared
+        }
+      } else if (step === 9) {
+        // Switch cursor back to Sentence 1
+        step = 10;
+        setCursorPos("1");
+        timer = setTimeout(tick, 100);
+      } else if (step === 10) {
+        // Erasing Sentence 1 ("Your Vision")
+        setCursorPos("1");
+        if (index1 > 0) {
+          index1--;
+          setText1(full1.slice(0, index1));
+          timer = setTimeout(tick, 35);
+        } else {
+          step = 11;
+          timer = setTimeout(tick, 650); // Pause on empty state before restarting loop
+        }
+      } else if (step === 11) {
+        // Restart loop
+        step = 0;
+        index1 = 0;
+        index2A = 0;
+        index2B = 0;
+        setCursorPos("1");
+        timer = setTimeout(tick, 200);
+      }
+    };
+
+    timer = setTimeout(tick, 500);
+
+    return () => {
+      isCancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
+  // Spotlight hover animation on "SPANDAN B"
+  useEffect(() => {
+    const nameEl = nameRef.current;
+    if (!nameEl) return;
+
+    let targetX = -1000;
+    let targetY = -1000;
+    let currentX = -1000;
+    let currentY = -1000;
+    let rafId: number;
+
+    const onPointerMove = (e: MouseEvent | PointerEvent) => {
+      const rect = nameEl.getBoundingClientRect();
+      targetX = e.clientX - rect.left;
+      targetY = e.clientY - rect.top;
+      // If cursor is far outside viewport vertically, hide spotlight
+      if (e.clientY < rect.top - 600 || e.clientY > rect.bottom + 600) {
+        targetX = -1000;
+        targetY = -1000;
+      }
+    };
+
+    const onPointerLeave = () => {
+      targetX = -1000;
+      targetY = -1000;
+    };
+
+    const updateLoop = () => {
+      currentX += (targetX - currentX) * 0.18;
+      currentY += (targetY - currentY) * 0.18;
+      nameEl.style.setProperty("--mouse-x", `${currentX.toFixed(1)}px`);
+      nameEl.style.setProperty("--mouse-y", `${currentY.toFixed(1)}px`);
+      rafId = requestAnimationFrame(updateLoop);
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("mousemove", onPointerMove, { passive: true });
+    document.addEventListener("mouseleave", onPointerLeave);
+    rafId = requestAnimationFrame(updateLoop);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("mousemove", onPointerMove);
+      document.removeEventListener("mouseleave", onPointerLeave);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   return (
     <section
+      ref={sectionRef}
       id="character"
       className="head-tracking-section"
       aria-label="Interactive Showcase Section"
     >
       <div className="head-tracking-viewport">
-        {/* Background Video fitted cleanly within the margin pillars */}
+        {/* Background Image fitted cleanly within the margin pillars */}
         <div className="section-bg-media-wrapper" aria-hidden="true">
-          <video
-            ref={videoRef}
-            src={BACKGROUND_CONFIG.videoSrc}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            className="section-bg-video"
+          <img
+            src={BACKGROUND_CONFIG.imageSrc}
+            alt="Futuristic environment backdrop"
+            className="section-bg-media"
             style={{
               objectFit: BACKGROUND_CONFIG.objectFit,
               objectPosition: BACKGROUND_CONFIG.objectPosition,
@@ -137,27 +308,36 @@ export default function HeadTrackingSection() {
           )}
         </div>
 
-        {/* Freestanding 3D Robot Character (Framed inside the circled floor area, without any background) */}
-        <div
-          className="robot-freestanding-stage"
-          style={
-            {
-              "--robot-left": `${ROBOT_PLACEMENT_CONFIG.leftPercent}%`,
-              "--robot-left-offset": `${ROBOT_PLACEMENT_CONFIG.leftOffsetPx}px`,
-              "--robot-bottom": `${ROBOT_PLACEMENT_CONFIG.bottomPercent}%`,
-              "--robot-bottom-offset": `${ROBOT_PLACEMENT_CONFIG.bottomOffsetPx}px`,
-              "--robot-width": `${ROBOT_PLACEMENT_CONFIG.widthPx}px`,
-              "--robot-height": `${ROBOT_PLACEMENT_CONFIG.heightPx}px`,
-            } as React.CSSProperties
-          }
-        >
-          <RobotViewer />
+        {/* Typing Line 1: "Let's start a" (Above Name, aligned close to left margin, behind right glass) */}
+        <div className="typing-text-wrapper typing-text-top" aria-hidden="true">
+          <span className="typing-text-white">{text1}</span>
+          {cursorPos === "1" && <span className="typing-cursor">|</span>}
         </div>
 
-        {/* Right Glass Block (Kept exactly as it is, anchored at 50% center seam) */}
+        {/* Pure Center Name Text (Confined strictly to text glyphs only, no background blocks or halos) */}
+        <h1 ref={nameRef} className="spotlight-name" aria-label="Spandan B">
+          SPANDAN B
+        </h1>
+
+        {/* Typing Line 2: "My" + Enter + "Architecture" (Below Name, aligned from left margin, behind right glass) */}
+        <div className="typing-text-wrapper typing-text-bottom" aria-hidden="true">
+          <div className="typing-multiline">
+            <div className="typing-line">
+              <span className="typing-text-compile">{text2A}</span>
+              {cursorPos === "2A" && <span className="typing-cursor">|</span>}
+            </div>
+            {(text2B.length > 0 || cursorPos === "2B") && (
+              <div className="typing-line">
+                <span className="typing-text-compile">{text2B}</span>
+                {cursorPos === "2B" && <span className="typing-cursor">|</span>}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Glass Block hosting the Contact Form (anchored at 50% center seam) */}
         <div
           className="glass-sections-container"
-          aria-hidden="true"
           style={
             {
               "--glass-bg-opacity": GLASS_CONFIG.bgOpacity,
@@ -172,8 +352,25 @@ export default function HeadTrackingSection() {
             } as React.CSSProperties
           }
         >
-          {/* Right Block of Section (resizes from rightPx to dead center) */}
-          <div className="glass-block glass-block-right" />
+          {/* Right Block of Section hosting the Contact Form */}
+          <div className="glass-block glass-block-right">
+            <ContactForm />
+
+            {/* Freestanding 3D Robot Character anchored precisely at the user-marked area */}
+            <div
+              className="robot-card-stage"
+              style={
+                {
+                  "--robot-right": `${ROBOT_PLACEMENT_CONFIG.rightOffsetPx}px`,
+                  "--robot-bottom": `${ROBOT_PLACEMENT_CONFIG.bottomOffsetPx}px`,
+                  "--robot-width": `${ROBOT_PLACEMENT_CONFIG.widthPx}px`,
+                  "--robot-height": `${ROBOT_PLACEMENT_CONFIG.heightPx}px`,
+                } as React.CSSProperties
+              }
+            >
+              <RobotViewer />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -215,6 +412,7 @@ export default function HeadTrackingSection() {
           overflow: hidden;
         }
 
+        .section-bg-media,
         .section-bg-video {
           width: 100%;
           height: 100%;
@@ -230,40 +428,149 @@ export default function HeadTrackingSection() {
           pointer-events: none;
         }
 
-        /* Freestanding 3D Robot Stage (Positioned on the floor in the bottom-left zone) */
-        .robot-freestanding-stage {
+        /* -----------------------------------------------------------------
+           PURE CENTER NAME TEXT (Purely text only: Spotlight confined inside glyphs)
+           Matches Figma lighting effect (https://www.youtube.com/shorts/BLds3R8OP1c):
+           - No background boxes or sections
+           - No mouse halo or moving glow on the backdrop
+           - Text is dark by default, illuminated with gold gradient strictly inside letters
+           ----------------------------------------------------------------- */
+        .spotlight-name {
           position: absolute;
-          left: calc(var(--robot-left, 0%) + var(--robot-left-offset, 0px));
-          bottom: calc(var(--robot-bottom, 0%) + var(--robot-bottom-offset, 10px));
-          width: var(--robot-width, 320px);
-          height: var(--robot-height, 400px);
-          max-width: 42vw;
-          max-height: 65vh;
-          z-index: 15;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          margin: 0;
+          padding: 0;
+          font-family: 'HeroAlphabet', 'HeroOrbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-size: clamp(3.2rem, 9.4vw, 10.5rem);
+          font-weight: 800;
+          letter-spacing: 0.14em;
+          line-height: 1;
+          text-transform: uppercase;
+          white-space: nowrap;
+          text-align: center;
+          pointer-events: none;
+          user-select: none;
+          z-index: 4;
+
+          /* Conical/radial gold lighting gradient clipped strictly to the text glyphs */
+          background: radial-gradient(
+            circle 300px at var(--mouse-x, -1000px) var(--mouse-y, -1000px),
+            #ffffff 0%,
+            #fff5b1 16%,
+            #f9e785 32%,
+            #d49b29 50%,
+            #422e0a 68%,
+            #080602 85%,
+            #000000 100%
+          );
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          filter: none;
+          text-shadow: none;
+          border: none;
+          box-shadow: none;
+        }
+
+        /* -----------------------------------------------------------------
+           TYPING TYPOGRAPHY: "YOUR VISION" & "MY \n ARCHITECTURE"
+           - Positioned behind right glass block (z-index: 3 vs glass z-index: 10)
+           - Aligned cleanly from left margin
+           - Big, premium geometric font matching reference screenshot
+           - Line 1 & Line 2 share identical white top with shadow/invisibility gradient at bottom of letters
+           - Line 2 has "My" then Enter then "Architecture"
+           - Blinking cursor has "Let's compile it" neutral chrome silver tint (#737373)
+           ----------------------------------------------------------------- */
+        .typing-text-wrapper {
+          position: absolute;
+          left: clamp(4px, 0.8vw, 12px);
+          z-index: 3;
+          font-family: 'Roboto Slab', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif;
+          font-size: clamp(2.3rem, 5.0vw, 5.4rem);
+          font-weight: 700;
+          letter-spacing: -0.01em;
+          line-height: 1.08;
+          text-transform: none;
+          white-space: nowrap;
           pointer-events: none;
           user-select: none;
         }
 
-        /* Ambient soft floor shadow puddle beneath the 3D stage */
-        .robot-freestanding-stage::after {
-          content: "";
+        .typing-text-top {
+          top: clamp(75px, 15vh, 150px);
+          display: inline-flex;
+          align-items: baseline;
+        }
+
+        .typing-text-bottom {
+          top: calc(50% + clamp(130px, 21vh, 215px));
+        }
+
+        .typing-multiline {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: clamp(12px, 2.2vh, 24px);
+        }
+
+        .typing-line {
+          display: inline-flex;
+          align-items: baseline;
+          line-height: 1.05;
+        }
+
+        /* Line 1: "Let's start a" - Normal solid crisp white color */
+        .typing-text-white {
+          display: inline-block;
+          color: #ffffff;
+          -webkit-text-fill-color: #ffffff;
+          filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.85));
+        }
+
+        /* Line 2: "Worthwhile \n Build" - Matches "Let's compile it." font color (#737373 / neutral chrome silver) without reflection animation */
+        .typing-text-compile {
+          display: inline-block;
+          color: #737373;
+          -webkit-text-fill-color: #737373;
+          filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.85));
+        }
+
+        /* Blinking Typing Cursor: Matches "Let's compile it." chrome silver color (#737373) */
+        .typing-cursor {
+          display: inline-block;
+          margin-left: clamp(2px, 0.3vw, 6px);
+          color: #737373;
+          -webkit-text-fill-color: #737373;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-weight: 200;
+          font-size: 0.95em;
+          line-height: 1;
+          vertical-align: baseline;
+          animation: cursorBlink 0.85s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes cursorBlink {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0;
+          }
+        }
+
+        /* 3D Robot Character Stage (Positioned precisely at user-marked bottom-right area) */
+        .robot-card-stage {
           position: absolute;
-          bottom: 12px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 260px;
-          height: 36px;
-          background: radial-gradient(
-            ellipse at center,
-            rgba(0, 0, 0, 0.65) 0%,
-            rgba(0, 0, 0, 0.40) 35%,
-            rgba(0, 0, 0, 0.15) 65%,
-            transparent 80%
-          );
-          border-radius: 50%;
-          filter: blur(8px);
+          right: var(--robot-right, -35px);
+          bottom: var(--robot-bottom, -15px);
+          width: var(--robot-width, 220px);
+          height: var(--robot-height, 240px);
+          z-index: 25;
           pointer-events: none;
-          z-index: -1;
+          user-select: none;
         }
 
         /* Glass Blocks Container (Right block middle seam locked at 50%) */
@@ -287,7 +594,7 @@ export default function HeadTrackingSection() {
           box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
           pointer-events: none;
           user-select: none;
-          overflow: hidden;
+          overflow: visible;
         }
 
         /* Right Block: left edge locked at (50% + gap/2); right edge set by --glass-right */
@@ -298,6 +605,10 @@ export default function HeadTrackingSection() {
           border-bottom-left-radius: var(--glass-inner-radius, 0px);
           border-top-right-radius: var(--glass-outer-radius, 20px);
           border-bottom-right-radius: var(--glass-outer-radius, 20px);
+          pointer-events: auto;
+          user-select: auto;
+          display: flex;
+          flex-direction: column;
         }
       `}</style>
     </section>

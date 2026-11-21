@@ -12,7 +12,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 export const ROBOT_CONFIG = {
   // 1. Orientation & Rotation:
   //    Base rotation around Y axis in degrees (-90 = turns model to face front towards camera)
-  rotationYDeg: -90,
+  rotationYDeg: -120,
 
   // 2. Positioning & Fitting within the Left Block:
   //    Base scale multiplier (1.0 = automatic fit to box)
@@ -25,7 +25,7 @@ export const ROBOT_CONFIG = {
   fitPadding: 1.70,
 
   // 3. Camera Field of View (in degrees):
-  cameraFov: 42,
+  cameraFov: 80,
 
   // 4. Head Tracking Sensitivity:
   //    Max horizontal head turn in radians (0.40 rad ≈ 23 degrees)
@@ -43,7 +43,7 @@ export const ROBOT_CONFIG = {
 
   // 6. Free Form / Idle Animation Sequence Controls:
   //    Inactivity timeout in ms before idle animation activates
-  idleTimeoutMs: 2000,
+  idleTimeoutMs: 1500,
   //    Full duration of the complete idle loop (seconds)
   idleCycleDurationSec: 10,
   //    Forward swing angle for straight forward leg movement (rad, ~32-34 deg as in Blender)
@@ -304,7 +304,7 @@ export default function RobotViewer() {
         });
 
         hasLoadedModel = true;
-        // 5. Position realistic ground contact shadow plane directly at feet level
+        // 5. Position realistic ground contact shadow & white specular reflection planes directly at feet level
         const feetY = -center.y + ROBOT_CONFIG.yOffset;
         shadowMesh.position.set(
           ROBOT_CONFIG.xOffset,
@@ -617,7 +617,7 @@ export default function RobotViewer() {
           justify-content: center;
           pointer-events: none;
           user-select: none;
-          overflow: hidden;
+          overflow: visible;
         }
 
         :global(.robot-viewer-container canvas) {

@@ -134,7 +134,7 @@ export default function Header() {
         </nav>
 
         {/* =====================================================================
-            3. RIGHT ACTION: "contact me" Outlined Button
+            3. RIGHT ACTION: "contact me" Luminous Button (Synced with Profile Glow)
             ===================================================================== */}
         <div className="header-right">
           <button
@@ -318,7 +318,7 @@ export default function Header() {
         }
 
         /* -------------------------------------------------------------
-           RIGHT: "Contact Us" Outlined Box (White fill on hover only)
+           RIGHT: "contact me" Luminous Button (Synced with GitHub Profile Button)
            ------------------------------------------------------------- */
         .header-right {
           display: flex;
@@ -330,35 +330,39 @@ export default function Header() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          height: 34px;
+          height: 36px;
           padding: 0 16px;
-          border-radius: 2px;
-          background-color: transparent;
-          color: #ffffff;
-          border: 1px solid rgba(255, 255, 255, 0.65);
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          font-size: clamp(12px, 1.05vw, 14px);
-          font-weight: 500;
-          letter-spacing: 0.06em;
+          border-radius: 10px;
+          background-color: #ffffff;
+          color: #000000;
+          border: 1px solid #ffffff;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: clamp(12px, 1.05vw, 13px);
+          font-weight: 700;
+          letter-spacing: 0.02em;
           text-decoration: none;
           cursor: url('/cursor.png') 0 0, pointer !important;
-          box-shadow: none;
-          transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+          transition: background-color 0.25s ease,
+            transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+            box-shadow 0.25s ease;
           user-select: none;
           pointer-events: auto;
+          position: relative;
         }
 
         .contact-btn:hover {
           background-color: #ffffff;
           color: #000000;
-          border-color: #ffffff;
-          transform: none;
-          box-shadow: none;
+          transform: translateY(-2px);
+          box-shadow: 0 0 12px rgba(255, 255, 255, 0.35),
+            0 0 22px rgba(255, 255, 255, 0.15),
+            0 6px 18px rgba(0, 0, 0, 0.45);
         }
 
         .contact-btn:active {
-          transform: none;
-          box-shadow: none;
+          transform: translateY(0);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
         }
 
         /* -------------------------------------------------------------
