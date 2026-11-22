@@ -88,24 +88,74 @@ export default function HeadTrackingSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const nameRef = useRef<HTMLHeadingElement>(null);
 
-  // Typing animation state for "Your Vision" (Line 1) and "My \n Architecture" (Line 2)
+  // State to track when the user has actually landed on this section
+  const [hasLanded, setHasLanded] = useState(false);
+
+  // Typing animation state for Line 1 ("Let’s start a") and Line 2 ("Worthwhile \n Build")
   const [text1, setText1] = useState("");
   const [text2A, setText2A] = useState("");
   const [text2B, setText2B] = useState("");
   const [cursorPos, setCursorPos] = useState<"1" | "2A" | "2B">("1");
 
-  // Smooth two-sentence typing & ordered erasing loop:
-  // 1. "Your Vision" types out smoothly
-  // 2. Cursor shifts to Line 2, "My" types out
-  // 3. Enter key: cursor drops to Line 2b, "Architecture" types out
+  // 1. Detect when user lands on this last page (enters viewport)
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || typeof window === "undefined") return;
+
+    // IntersectionObserver to accurately track when section is in view
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.25) {
+          setHasLanded(true);
+        } else {
+          setHasLanded(false);
+        }
+      },
+      {
+        threshold: [0, 0.25, 0.5],
+      }
+    );
+    observer.observe(el);
+
+    // Scroll fallback check for immediate position calculation
+    const onScroll = () => {
+      const rect = el.getBoundingClientRect();
+      const winH = window.innerHeight;
+      const inView = rect.top < winH * 0.75 && rect.bottom > winH * 0.25;
+      setHasLanded((prev) => (prev !== inView ? inView : prev));
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  // 2. Smooth typing & ordered erasing loop:
+  // Starts ONLY after user lands on the last page with a 1.5s delay
+  // 1. "Let’s start a" types out smoothly
+  // 2. Cursor shifts to Line 2, "Worthwhile" types out
+  // 3. Enter key: cursor drops to Line 2b, "Build" types out
   // 4. Pause with both sentences fully visible
-  // 5. Line 2b ("Architecture") is erased first, then Line 2a ("My")
-  // 6. Cursor shifts back up to Line 1, "Your Vision" is erased
+  // 5. Line 2b ("Build") is erased first, then Line 2a ("Worthwhile")
+  // 6. Cursor shifts back up to Line 1, "Let’s start a" is erased
   // 7. Pause, then repeat
   useEffect(() => {
+    if (!hasLanded) {
+      setText1("");
+      setText2A("");
+      setText2B("");
+      setCursorPos("1");
+      return;
+    }
+
     const full1 = "Let’s start a";
     const full2A = "Worthwhile Build";
-    const full2B = "Togehter.";
+    const full2B = "Together";
     let timer: NodeJS.Timeout | null = null;
     let isCancelled = false;
 
@@ -118,7 +168,7 @@ export default function HeadTrackingSection() {
       if (isCancelled) return;
 
       if (step === 0) {
-        // Typing Sentence 1: "Your Vision"
+        // Typing Sentence 1: "Let’s start a"
         setCursorPos("1");
         if (index1 < full1.length) {
           index1++;
@@ -126,15 +176,15 @@ export default function HeadTrackingSection() {
           timer = setTimeout(tick, 75);
         } else {
           step = 1;
-          timer = setTimeout(tick, 400); // Pause briefly before switching to Sentence 2
+          timer = setTimeout(tick, 450); // Pause briefly before switching to Sentence 2
         }
       } else if (step === 1) {
-        // Move cursor to Sentence 2, Line A ("My")
+        // Move cursor to Sentence 2, Line A ("Worthwhile")
         step = 2;
         setCursorPos("2A");
         timer = setTimeout(tick, 100);
       } else if (step === 2) {
-        // Typing Sentence 2, Line A: "My"
+        // Typing Sentence 2, Line A: "Worthwhile"
         setCursorPos("2A");
         if (index2A < full2A.length) {
           index2A++;
@@ -142,7 +192,7 @@ export default function HeadTrackingSection() {
           timer = setTimeout(tick, 75);
         } else {
           step = 3;
-          timer = setTimeout(tick, 250); // Pause to simulate "Enter" keypress!
+          timer = setTimeout(tick, 280); // Pause to simulate "Enter" keypress!
         }
       } else if (step === 3) {
         // Press Enter: Move cursor down to Line B
@@ -150,7 +200,7 @@ export default function HeadTrackingSection() {
         setCursorPos("2B");
         timer = setTimeout(tick, 100);
       } else if (step === 4) {
-        // Typing Sentence 2, Line B: "Architecture"
+        // Typing Sentence 2, Line B: "Build"
         setCursorPos("2B");
         if (index2B < full2B.length) {
           index2B++;
@@ -158,14 +208,14 @@ export default function HeadTrackingSection() {
           timer = setTimeout(tick, 75);
         } else {
           step = 5;
-          timer = setTimeout(tick, 2800); // Hold both sentences fully visible for reading
+          timer = setTimeout(tick, 3000); // Hold both sentences fully visible for reading
         }
       } else if (step === 5) {
         // Begin erasing: 2nd sentence is cleared out first (starting with Line B)
         step = 6;
         timer = setTimeout(tick, 40);
       } else if (step === 6) {
-        // Erasing Line B ("Architecture")
+        // Erasing Line B ("Build")
         setCursorPos("2B");
         if (index2B > 0) {
           index2B--;
@@ -176,12 +226,12 @@ export default function HeadTrackingSection() {
           timer = setTimeout(tick, 180); // Pause as newline is deleted
         }
       } else if (step === 7) {
-        // Move cursor back up to Line A ("My")
+        // Move cursor back up to Line A ("Worthwhile")
         step = 8;
         setCursorPos("2A");
         timer = setTimeout(tick, 80);
       } else if (step === 8) {
-        // Erasing Line A ("My")
+        // Erasing Line A ("Worthwhile")
         setCursorPos("2A");
         if (index2A > 0) {
           index2A--;
@@ -197,7 +247,7 @@ export default function HeadTrackingSection() {
         setCursorPos("1");
         timer = setTimeout(tick, 100);
       } else if (step === 10) {
-        // Erasing Sentence 1 ("Your Vision")
+        // Erasing Sentence 1 ("Let’s start a")
         setCursorPos("1");
         if (index1 > 0) {
           index1--;
@@ -214,17 +264,18 @@ export default function HeadTrackingSection() {
         index2A = 0;
         index2B = 0;
         setCursorPos("1");
-        timer = setTimeout(tick, 200);
+        timer = setTimeout(tick, 250);
       }
     };
 
-    timer = setTimeout(tick, 500);
+    // User requirement: Start typing animation after 1 to 2 sec (1.5s) after landing
+    timer = setTimeout(tick, 1500);
 
     return () => {
       isCancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [hasLanded]);
 
   // Spotlight hover animation on "SPANDAN B"
   useEffect(() => {
@@ -476,20 +527,18 @@ export default function HeadTrackingSection() {
         }
 
         /* -----------------------------------------------------------------
-           TYPING TYPOGRAPHY: "YOUR VISION" & "MY \n ARCHITECTURE"
+           TYPING TYPOGRAPHY: "LET'S START A" & "WORTHWHILE \n BUILD"
            - Positioned behind right glass block (z-index: 3 vs glass z-index: 10)
            - Aligned cleanly from left margin
-           - Big, premium geometric font matching reference screenshot
-           - Line 1 & Line 2 share identical white top with shadow/invisibility gradient at bottom of letters
-           - Line 2 has "My" then Enter then "Architecture"
-           - Blinking cursor has "Let's compile it" neutral chrome silver tint (#737373)
+           - Big, premium serif font 'Roboto Slab' shared identically across both sentences
+           - Line 1 ("Let's start a"): Crisp pure solid white, enlarged commanding size
+           - Line 2 ("Worthwhile \n Build"): Neutral chrome silver tone (#737373)
            ----------------------------------------------------------------- */
         .typing-text-wrapper {
           position: absolute;
           left: clamp(4px, 0.8vw, 12px);
           z-index: 3;
           font-family: 'Roboto Slab', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif;
-          font-size: clamp(2.3rem, 5.0vw, 5.4rem);
           font-weight: 700;
           letter-spacing: -0.01em;
           line-height: 1.08;
@@ -500,13 +549,19 @@ export default function HeadTrackingSection() {
         }
 
         .typing-text-top {
-          top: clamp(75px, 15vh, 150px);
+          top: clamp(65px, 13.5vh, 130px);
           display: inline-flex;
           align-items: baseline;
+          font-family: 'Roboto Slab', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif;
+          font-size: clamp(2.9rem, 6.2vw, 6.6rem);
+          font-weight: 700;
         }
 
         .typing-text-bottom {
           top: calc(50% + clamp(130px, 21vh, 215px));
+          font-family: 'Roboto Slab', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif;
+          font-size: clamp(2.3rem, 5.0vw, 5.4rem);
+          font-weight: 700;
         }
 
         .typing-multiline {
