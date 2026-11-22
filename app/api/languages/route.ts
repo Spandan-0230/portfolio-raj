@@ -25,7 +25,7 @@ interface CachedLanguagesState {
 }
 
 let memoryLanguageCache: CachedLanguagesState | null = null;
-const CACHE_TTL_MS = 20000; // 20-second freshness window
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30-minute cache window to protect against GitHub 403 rate limits
 
 export async function GET() {
   const now = Date.now();
@@ -135,15 +135,23 @@ export async function GET() {
       (a, b) => languageTotals[b] - languageTotals[a]
     );
 
-    // Merge: include any primary language not already captured
-    const combined = [...sortedByUsage];
-    for (const pl of primaryLanguages) {
-      if (!combined.includes(pl)) {
-        combined.push(pl);
+    // Cumulative master set: always retain all verified portfolio languages
+    // and append any newly discovered languages from GitHub repositories
+    const languageSet = new Set<string>(FALLBACK_LANGUAGES);
+
+    for (const lang of sortedByUsage) {
+      if (lang && typeof lang === "string") {
+        languageSet.add(lang.trim());
       }
     }
 
-    const finalLanguages = combined.length > 0 ? combined : FALLBACK_LANGUAGES;
+    for (const pl of primaryLanguages) {
+      if (pl && typeof pl === "string") {
+        languageSet.add(pl.trim());
+      }
+    }
+
+    const finalLanguages = Array.from(languageSet);
     const syncedAt = new Date().toISOString();
 
     memoryLanguageCache = {

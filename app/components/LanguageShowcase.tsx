@@ -266,10 +266,15 @@ export default function LanguageShowcase() {
   // Active Real-Time Fetching Engine: background polling + immediate sync on focus/visibility
   useEffect(() => {
     let isMounted = true;
+    let lastFetched = 0;
 
     const fetchLiveLanguages = async () => {
+      const now = Date.now();
+      if (now - lastFetched < 60000) return; // Debounce rapid tab switches to avoid rate limits
+      lastFetched = now;
+
       try {
-        const res = await fetch(`/api/languages?_t=${Date.now()}`, {
+        const res = await fetch(`/api/languages?_t=${now}`, {
           cache: "no-store",
         });
         if (!res.ok) return;
@@ -277,18 +282,22 @@ export default function LanguageShowcase() {
         if (!isMounted) return;
 
         if (Array.isArray(data?.languages) && data.languages.length > 0) {
-          setLanguages(data.languages);
+          setLanguages((prev) => {
+            // Master set union: always preserves all initial and discovered languages
+            const masterSet = new Set([...INITIAL_LANGUAGES, ...prev, ...data.languages]);
+            return Array.from(masterSet);
+          });
         }
       } catch {
-        // Keeps fallback languages safely on transient failure
+        // Keeps verified languages safely on transient failure
       }
     };
 
     // 1. Initial immediate live fetch
     fetchLiveLanguages();
 
-    // 2. Active background sync polling (every 45 seconds)
-    const intervalId = setInterval(fetchLiveLanguages, 45000);
+    // 2. Active background sync polling (every 5 minutes)
+    const intervalId = setInterval(fetchLiveLanguages, 300000);
 
     // 3. Instant sync whenever user returns to tab / focuses window
     const handleSync = () => {
