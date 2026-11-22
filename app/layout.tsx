@@ -5,6 +5,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Portfolio",
   description: "Cinematic scroll animation",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -15,6 +22,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/icon.png" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <Script
           id="scroll-reset"
           strategy="beforeInteractive"

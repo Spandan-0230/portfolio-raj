@@ -93,7 +93,7 @@ export default function Header() {
     >
       <div className="header-inner">
         {/* =====================================================================
-            1. LEFT BRANDING: "SB" In Spiky Gothic Medieval Font + Divider Line
+            1. LEFT BRANDING: Intertwined "SB" Monogram Logo + Divider Line
             ===================================================================== */}
         <div className="header-left">
           <button
@@ -102,7 +102,11 @@ export default function Header() {
             className="brand-btn"
             aria-label="Spandan Bole - Home"
           >
-            <span className="brand-monogram">SB</span>
+            <img
+              src="/logo.png"
+              alt="SB Monogram"
+              className="brand-logo-img"
+            />
           </button>
           <div className="brand-divider" aria-hidden="true" />
         </div>
@@ -234,12 +238,12 @@ export default function Header() {
         }
 
         /* -------------------------------------------------------------
-           LEFT: Brand Monogram "SB" & Vertical Bar "|" (No glow/circle)
+           LEFT: Brand Monogram "SB" Logo & Vertical Bar "|"
            ------------------------------------------------------------- */
         .header-left {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: clamp(12px, 1.2vw, 16px);
           pointer-events: auto;
         }
 
@@ -252,39 +256,27 @@ export default function Header() {
           align-items: center;
           user-select: none;
           pointer-events: auto;
-          transition: opacity 0.2s ease;
+          transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .brand-btn:hover {
-          opacity: 0.82;
-          transform: none;
-          filter: none;
+          opacity: 0.88;
+          transform: scale(1.05);
         }
 
-        .brand-monogram {
-          font-family: 'BrandPirata', 'Pirata One', 'BrandCinzel', 'Cinzel Decorative', cursive, serif;
-          font-size: clamp(28px, 2.4vw, 36px);
-          font-weight: 700;
-          line-height: 1;
-          letter-spacing: 0.04em;
-          background-image: linear-gradient(
-            180deg,
-            #ffffff 0%,
-            #e4e4e7 35%,
-            #71717a 58%,
-            #d4d4d8 85%,
-            #ffffff 100%
-          );
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          color: transparent;
-          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
+        .brand-logo-img {
+          height: clamp(30px, 2.4vw, 38px);
+          width: auto;
+          display: block;
+          object-fit: contain;
+          filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.75));
+          user-select: none;
+          pointer-events: none;
         }
 
         .brand-divider {
           width: 1.5px;
-          height: 24px;
+          height: 22px;
           background-color: rgba(255, 255, 255, 0.28);
           border-radius: 1px;
         }
@@ -412,17 +404,19 @@ export default function Header() {
           height: 36px;
           padding: 0 16px;
           border-radius: 10px;
-          background-color: #ffffff;
-          color: #000000;
-          border: 1px solid #ffffff;
+          background-color: transparent;
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.85);
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           font-size: clamp(12px, 1.05vw, 13px);
           font-weight: 700;
           letter-spacing: 0.02em;
           text-decoration: none;
           cursor: url('/cursor.png') 0 0, pointer !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
           transition: background-color 0.25s ease,
+            color 0.25s ease,
+            border-color 0.25s ease,
             transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
             box-shadow 0.25s ease;
           user-select: none;
@@ -433,6 +427,7 @@ export default function Header() {
         .contact-btn:hover {
           background-color: #ffffff;
           color: #000000;
+          border-color: #ffffff;
           transform: translateY(-2px);
           box-shadow: 0 0 12px rgba(255, 255, 255, 0.35),
             0 0 22px rgba(255, 255, 255, 0.15),
@@ -455,6 +450,10 @@ export default function Header() {
 
           .brand-divider {
             display: none;
+          }
+
+          .brand-logo-img {
+            height: 28px;
           }
 
           .header-center {
