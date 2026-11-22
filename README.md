@@ -180,7 +180,7 @@ npm run start
 
 ## 🤝 Connect
 
-- **Portfolio**: [Spandan Bole](https://github.com/Spandan-0230)
+- **Portfolio**: [Spandan Bole](https://spandan-raj-portfolio.vercel.app/)
 - **GitHub**: [@Spandan-0230](https://github.com/Spandan-0230)
 - **LinkedIn**: [Spandan Bole](https://www.linkedin.com/in/spandan-bole-pr3020/)
 - **Email**: [spandanbole777@gmail.com](mailto:spandanbole777@gmail.com)
