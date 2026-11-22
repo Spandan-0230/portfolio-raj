@@ -14,6 +14,7 @@ const FALLBACK_LANGUAGES = [
   "HTML",
   "CSS",
   "PowerShell",
+  "C++",
 ];
 
 // In-memory hot cache for high performance while maintaining real-time freshness

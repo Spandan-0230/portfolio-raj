@@ -11,7 +11,31 @@ const INITIAL_LANGUAGES = [
   "HTML",
   "CSS",
   "PowerShell",
+  "C++",
 ];
+
+// Helper to partition any number of languages into balanced, perfectly symmetrical rows
+function splitIntoSymmetricalRows<T>(items: T[], targetMaxPerRow = 5): T[][] {
+  const n = items.length;
+  if (n <= targetMaxPerRow) {
+    return [items];
+  }
+
+  const numRows = Math.ceil(n / targetMaxPerRow);
+  const baseItemsPerRow = Math.floor(n / numRows);
+  const remainder = n % numRows;
+
+  const rows: T[][] = [];
+  let currentIndex = 0;
+
+  for (let r = 0; r < numRows; r++) {
+    const rowSize = r < remainder ? baseItemsPerRow + 1 : baseItemsPerRow;
+    rows.push(items.slice(currentIndex, currentIndex + rowSize));
+    currentIndex += rowSize;
+  }
+
+  return rows;
+}
 
 // High-fidelity custom inline SVGs for zero-latency core languages
 function CoreLanguageSvg({ name, size = 44 }: { name: string; size?: number }) {
@@ -54,6 +78,25 @@ function CoreLanguageSvg({ name, size = 44 }: { name: string; size?: number }) {
         <path
           fill="#ffffff"
           d="M66.5 78.4c-2.4 2.8-5.7 4.9-9.5 6.1-4 1.2-8.3 1.4-12.7 0.5-4.4-1-8.3-3.1-11.4-6.3-3.2-3.2-5.4-7.2-6.5-11.7-1.1-4.5-0.9-9.1 0.5-13.4 1.4-4.2 3.9-7.8 7.3-10.4 3.4-2.6 7.4-4.2 11.7-4.6 4.3-0.4 8.7 0.3 12.6 2.1 3.4 1.6 6.3 4 8.5 7l-7.3 6.1c-1.6-1.9-3.5-3.3-5.8-4.2-2.3-0.9-4.8-1.1-7.2-0.6-2.5 0.5-4.7 1.7-6.5 3.5-1.9 1.8-3.1 4.1-3.7 6.6-0.6 2.5-0.5 5.1 0.3 7.6 0.8 2.4 2.2 4.6 4.1 6.2 2 1.6 4.3 2.5 6.8 2.8 2.5 0.3 5.1-0.2 7.4-1.3 1.9-0.9 3.5-2.2 4.8-3.9l8.6 5.6zM88.7 60.1l1.5-6.6h-5.2l1.5-6.6h-4.9l-1.5 6.6h-5.4l1.5-6.6h-4.9l-1.5 6.6h-4.7v4.6h4.1l-1.3 5.9h-4.5v4.6h3.9l-1.5 6.6h4.9l1.5-6.6h5.4l-1.5 6.6h4.9l1.5-6.6h4.7v-4.6h-4.1l1.3-5.9h4.5v-4.6h-4.1zm-8.8 5.9h-5.4l1.3-5.9h5.4l-1.3 5.9z"
+        />
+      </svg>
+    );
+  }
+
+  if (norm === "c++" || norm === "cpp") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 128 128">
+        <path
+          fill="#00599C"
+          d="M115.4 30.7L67.1 2.9c-1.9-1.1-4.3-1.1-6.2 0L12.6 30.7c-1.9 1.1-3.1 3.2-3.1 5.4v55.8c0 2.2 1.2 4.3 3.1 5.4l48.3 27.9c1 0.5 2.1 0.8 3.1 0.8s2.2-0.3 3.1-0.8l48.3-27.9c1.9-1.1 3.1-3.2 3.1-5.4V36.1c0-2.2-1.2-4.3-3.1-5.4z"
+        />
+        <path
+          fill="#004482"
+          d="M64 2.9v122.2c1 0 2.2-0.3 3.1-0.8l48.3-27.9c1.9-1.1 3.1-3.2 3.1-5.4V36.1c0-2.2-1.2-4.3-3.1-5.4L67.1 2.9c-1-0.5-2.1-0.8-3.1-0.8z"
+        />
+        <path
+          fill="#ffffff"
+          d="M66.5 78.4c-2.4 2.8-5.7 4.9-9.5 6.1-4 1.2-8.3 1.4-12.7 0.5-4.4-1-8.3-3.1-11.4-6.3-3.2-3.2-5.4-7.2-6.5-11.7-1.1-4.5-0.9-9.1 0.5-13.4 1.4-4.2 3.9-7.8 7.3-10.4 3.4-2.6 7.4-4.2 11.7-4.6 4.3-0.4 8.7 0.3 12.6 2.1 3.4 1.6 6.3 4 8.5 7l-7.3 6.1c-1.6-1.9-3.5-3.3-5.8-4.2-2.3-0.9-4.8-1.1-7.2-0.6-2.5 0.5-4.7 1.7-6.5 3.5-1.9 1.8-3.1 4.1-3.7 6.6-0.6 2.5-0.5 5.1 0.3 7.6 0.8 2.4 2.2 4.6 4.1 6.2 2 1.6 4.3 2.5 6.8 2.8 2.5 0.3 5.1-0.2 7.4-1.3 1.9-0.9 3.5-2.2 4.8-3.9l8.6 5.6zM88 66h-4v4h-4v-4h-4v-4h4v-4h4v4h4v4zm20 0h-4v4h-4v-4h-4v-4h4v-4h4v4h4v4z"
         />
       </svg>
     );
@@ -210,6 +253,7 @@ function LanguageIcon({ name, size = 44 }: { name: string; size?: number }) {
 
 export default function LanguageShowcase() {
   const [languages, setLanguages] = useState<string[]>(INITIAL_LANGUAGES);
+  const rows = splitIntoSymmetricalRows(languages, 5);
 
   const trackRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -543,42 +587,52 @@ export default function LanguageShowcase() {
           </h2>
         </div>
 
-        {/* Perfectly Symmetrical Grid of Floating Squares */}
-        <div className="languages-grid">
-          {languages.map((lang, idx) => (
-            <div
-              key={lang}
-              ref={(el) => {
-                cardRefs.current[idx] = el;
-              }}
-              className="lang-square-card"
-            >
-              {/* White loading border beam - active ONLY on hover */}
-              <div className="border-beam" />
+        {/* Symmetrical Dynamic Grid of Floating Squares */}
+        <div className="languages-rows-container">
+          {rows.map((row, rIdx) => {
+            const rowOffset = rows.slice(0, rIdx).reduce((acc, r) => acc + r.length, 0);
+            return (
+              <div key={rIdx} className="languages-row">
+                {row.map((lang, cIdx) => {
+                  const idx = rowOffset + cIdx;
+                  return (
+                    <div
+                      key={lang}
+                      ref={(el) => {
+                        cardRefs.current[idx] = el;
+                      }}
+                      className="lang-square-card"
+                    >
+                      {/* White loading border beam - active ONLY on hover */}
+                      <div className="border-beam" />
 
-              {/* Inner Card Face */}
-              <div className="card-face">
-                {/* Large Centered Icon */}
-                <div className="icon-wrap">
-                  <LanguageIcon name={lang} size={44} />
-                </div>
+                      {/* Inner Card Face */}
+                      <div className="card-face">
+                        {/* Large Centered Icon */}
+                        <div className="icon-wrap">
+                          <LanguageIcon name={lang} size={44} />
+                        </div>
 
-                {/* Text Label Below */}
-                <span className="lang-label">{lang}</span>
+                        {/* Text Label Below */}
+                        <span className="lang-label">{lang}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {/* Symmetrical Layout, Hover Border Beam & Floating Physics Styles */}
       <style jsx>{`
         /* Auto-Symmetrical Adaptive Layout */
-        .languages-grid {
+        .languages-rows-container {
           display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
+          flex-direction: column;
           align-items: center;
+          justify-content: center;
           gap: 16px;
           max-width: 1100px;
           width: 100%;
@@ -587,9 +641,23 @@ export default function LanguageShowcase() {
           margin: 0 auto;
         }
 
+        .languages-row {
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          gap: 16px;
+          width: 100%;
+        }
+
         @media (max-width: 619px) {
-          .languages-grid {
+          .languages-rows-container {
             gap: 12px;
+          }
+
+          .languages-row {
+            gap: 12px;
+            flex-wrap: wrap;
             max-width: 320px;
           }
         }
