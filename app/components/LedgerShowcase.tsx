@@ -588,10 +588,10 @@ export function StageSixLeftPane() {
         }
 
         .see-more-text {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 13.5px;
+          font-family: 'Agrave Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: 14.5px;
           font-weight: 400;
-          letter-spacing: 0.01em;
+          letter-spacing: 0.02em;
           color: inherit;
         }
 

@@ -1063,16 +1063,16 @@ export default function ProjectsShowcase() {
         .see-more-projects-link {
           display: inline-flex;
           align-items: center;
-          gap: 7px;
+          gap: 8px;
           background: transparent;
           border: none;
           outline: none;
           box-shadow: none;
-          color: rgba(255, 255, 255, 0.65);
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          font-size: clamp(12px, 1.05vw, 14px);
+          color: rgba(255, 255, 255, 0.72);
+          font-family: 'Agrave Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: clamp(14px, 1.2vw, 16.5px);
           font-weight: 400;
-          letter-spacing: 0.04em;
+          letter-spacing: 0.02em;
           text-decoration: none;
           cursor: url('/cursor.png') 0 0, pointer !important;
           transition: color 0.2s ease, transform 0.2s ease;
@@ -1089,6 +1089,7 @@ export default function ProjectsShowcase() {
         }
 
         .see-more-projects-text {
+          font-family: 'Agrave Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           color: inherit;
         }
 

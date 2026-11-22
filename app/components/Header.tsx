@@ -11,6 +11,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "hero", label: "Home" },
   { id: "activity", label: "Activity" },
   { id: "works", label: "Work" },
+  { id: "skills", label: "Skills" },
 ];
 
 export default function Header() {
@@ -27,17 +28,31 @@ export default function Header() {
       const shouldShow = scrollY > 25;
       setIsVisible(shouldShow);
 
-      // Detect active section for dynamic navigation highlighting
+      // Detect active section using real-time viewport bounding rects
       const winH = window.innerHeight;
       const actEl = document.getElementById("activity");
       const worksEl = document.getElementById("works");
+      const stage4El = document.getElementById("stage4");
+      const langEl = document.getElementById("languages");
       const charEl = document.getElementById("character");
 
-      if (charEl && scrollY >= charEl.offsetTop - winH * 0.4) {
+      const getTop = (el: HTMLElement | null) => (el ? el.getBoundingClientRect().top : Infinity);
+
+      const charTop = getTop(charEl);
+      const langTop = getTop(langEl);
+      const stage4Top = getTop(stage4El);
+      const worksTop = getTop(worksEl);
+      const actTop = getTop(actEl);
+
+      const threshold = winH * 0.45;
+
+      if (charTop <= threshold) {
         setActiveSection("contact");
-      } else if (worksEl && scrollY >= worksEl.offsetTop - winH * 0.4) {
+      } else if (langTop <= threshold) {
+        setActiveSection("skills");
+      } else if (stage4Top <= threshold || worksTop <= threshold) {
         setActiveSection("works");
-      } else if (actEl && scrollY >= actEl.offsetTop - winH * 0.4) {
+      } else if (actTop <= threshold) {
         setActiveSection("activity");
       } else {
         setActiveSection("hero");
@@ -65,14 +80,26 @@ export default function Header() {
       return;
     }
 
+    if (id === "skills") {
+      const el = document.getElementById("languages");
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const totalScrollable = el.offsetHeight - window.innerHeight;
+        // Scroll directly to the sweet spot where the section's animation is 100% complete, fully settled and razor sharp
+        const targetY =
+          window.scrollY + rect.top + (totalScrollable > 0 ? totalScrollable * 0.35 : 0);
+        window.scrollTo({ top: targetY, behavior: "smooth" });
+      }
+      return;
+    }
+
     const el = document.getElementById(id);
     if (el) {
+      const rect = el.getBoundingClientRect();
       const totalScrollable = el.offsetHeight - window.innerHeight;
       // Scroll directly to the sweet spot where the section's animation is 100% complete, fully settled and razor sharp
       const targetY =
-        totalScrollable > 0
-          ? el.offsetTop + totalScrollable * 0.35
-          : el.offsetTop;
+        window.scrollY + rect.top + (totalScrollable > 0 ? totalScrollable * 0.35 : 0);
       window.scrollTo({ top: targetY, behavior: "smooth" });
     }
   };
@@ -81,7 +108,8 @@ export default function Header() {
     if (typeof window === "undefined") return;
     const charEl = document.getElementById("character");
     if (charEl) {
-      window.scrollTo({ top: charEl.offsetTop, behavior: "smooth" });
+      const rect = charEl.getBoundingClientRect();
+      window.scrollTo({ top: window.scrollY + rect.top, behavior: "smooth" });
     }
   };
 
@@ -126,10 +154,8 @@ export default function Header() {
                     className={`nav-link ${isActive ? "active" : ""}`}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <span className="nav-bullet" aria-hidden="true">
-                      •
-                    </span>
                     <span className="nav-label">{item.label}</span>
+                    <span className="nav-underline" aria-hidden="true" />
                   </button>
                 </li>
               );
@@ -188,7 +214,7 @@ export default function Header() {
           <button
             type="button"
             onClick={handleContactClick}
-            className="contact-btn"
+            className={`contact-btn ${activeSection === "contact" ? "active" : ""}`}
             aria-label="contact me"
           >
             <span>Contact</span>
@@ -296,7 +322,7 @@ export default function Header() {
         .nav-list {
           display: flex;
           align-items: center;
-          gap: clamp(14px, 2.2vw, 30px);
+          gap: clamp(12px, 1.8vw, 24px);
           list-style: none;
           margin: 0;
           padding: 0;
@@ -308,28 +334,45 @@ export default function Header() {
         }
 
         .nav-link {
+          position: relative;
           background: transparent;
           border: none;
-          padding: 6px 4px;
+          padding: 6px 4px 8px;
           display: inline-flex;
+          flex-direction: column;
           align-items: center;
-          gap: 6px;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          font-size: clamp(12px, 1.05vw, 14px);
+          font-size: clamp(12.5px, 1.05vw, 14px);
           font-weight: 500;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.04em;
           color: rgba(255, 255, 255, 0.45);
           cursor: url('/cursor.png') 0 0, pointer !important;
-          transition: color 0.2s ease;
+          transition: color 0.25s ease;
           user-select: none;
-          line-height: 1;
+          line-height: 1.2;
           pointer-events: auto;
         }
 
-        .nav-bullet {
-          font-size: 11px;
-          color: rgba(255, 255, 255, 0.25);
-          transition: color 0.2s ease;
+        .nav-label {
+          display: block;
+          transition: color 0.25s ease;
+        }
+
+        .nav-underline {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background: #ffffff;
+          border-radius: 2px;
+          transform: scaleX(0);
+          transform-origin: center;
+          opacity: 0;
+          box-shadow: 0 0 8px rgba(255, 255, 255, 0.65);
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                      opacity 0.25s ease;
+          pointer-events: none;
         }
 
         .nav-link:hover {
@@ -338,9 +381,9 @@ export default function Header() {
           text-shadow: none;
         }
 
-        .nav-link:hover .nav-bullet {
-          color: #ffffff;
-          transform: none;
+        .nav-link:hover:not(.active) .nav-underline {
+          transform: scaleX(0.5);
+          opacity: 0.45;
         }
 
         .nav-link.active {
@@ -349,8 +392,9 @@ export default function Header() {
           text-shadow: none;
         }
 
-        .nav-link.active .nav-bullet {
-          color: #ffffff;
+        .nav-link.active .nav-underline {
+          transform: scaleX(1);
+          opacity: 1;
         }
 
         /* -------------------------------------------------------------
@@ -424,6 +468,15 @@ export default function Header() {
           position: relative;
         }
 
+        .contact-btn.active {
+          background-color: #ffffff;
+          color: #000000;
+          border-color: #ffffff;
+          box-shadow: 0 0 12px rgba(255, 255, 255, 0.35),
+            0 0 22px rgba(255, 255, 255, 0.15),
+            0 6px 18px rgba(0, 0, 0, 0.45);
+        }
+
         .contact-btn:hover {
           background-color: #ffffff;
           color: #000000;
@@ -463,10 +516,6 @@ export default function Header() {
 
           .nav-list {
             gap: 12px;
-          }
-
-          .nav-bullet {
-            display: none;
           }
 
           .contact-btn {

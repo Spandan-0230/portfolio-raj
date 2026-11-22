@@ -98,11 +98,10 @@ export default function BioSyncGalleryModal({
   return createPortal(
     <div
       className="biosync-gallery-backdrop"
-      onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
     >
-      {/* Floating Minimal Close Button */}
+      {/* Pinned Minimal Close Button (stays pinned in viewport when scrolling) */}
       <button
         type="button"
         className="gallery-close-btn"
@@ -114,9 +113,10 @@ export default function BioSyncGalleryModal({
         <span className="close-label">Close</span>
       </button>
 
-      {/* Main Scrollable Gallery Container */}
-      <div className="gallery-scroll-container" onClick={handleBackdropClick}>
-        <div className="gallery-rows-wrapper" onClick={handleBackdropClick}>
+      {/* Main Scrollable Gallery Viewport */}
+      <div className="gallery-scroll-viewport" onClick={handleBackdropClick}>
+        <div className="gallery-scroll-container" onClick={handleBackdropClick}>
+          <div className="gallery-rows-wrapper" onClick={handleBackdropClick}>
           {/* Row 1: 3 Portrait Phones */}
           <div className="gallery-row" onClick={handleBackdropClick}>
             {row1.map((img) => (
@@ -181,6 +181,7 @@ export default function BioSyncGalleryModal({
           </div>
         </div>
       </div>
+      </div>
 
       {/* Individual Focused Image Pop-up (Reusing exact PureImagePopup logic) */}
       <PureImagePopup
@@ -198,31 +199,20 @@ export default function BioSyncGalleryModal({
           background: rgba(0, 0, 0, 0.88);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
-          overflow-y: auto;
-          overflow-x: hidden;
-          overscroll-behavior: contain;
-          -webkit-overflow-scrolling: touch;
+          overflow: hidden;
           animation: galleryFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           user-select: none;
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE and Edge */
-        }
-
-        .biosync-gallery-backdrop::-webkit-scrollbar {
-          display: none; /* Chrome, Safari and Opera */
-          width: 0;
-          height: 0;
         }
 
         .gallery-close-btn {
-          position: fixed;
+          position: absolute;
           top: clamp(16px, 3vh, 28px);
           right: clamp(16px, 3vw, 32px);
-          z-index: 999995;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.18);
+          z-index: 99999;
+          background: rgba(18, 18, 20, 0.85);
+          border: 1px solid rgba(255, 255, 255, 0.22);
           color: #ffffff;
-          padding: 8px 16px;
+          padding: 8px 18px;
           border-radius: 999px;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           font-size: 13px;
@@ -232,9 +222,10 @@ export default function BioSyncGalleryModal({
           align-items: center;
           gap: 8px;
           cursor: url('/cursor.png') 0 0, pointer !important;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+          transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
           user-select: none;
         }
 
@@ -243,7 +234,7 @@ export default function BioSyncGalleryModal({
           color: #000000;
           border-color: #ffffff;
           transform: none;
-          box-shadow: none;
+          box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25);
         }
 
         .gallery-close-btn:active {
@@ -257,6 +248,26 @@ export default function BioSyncGalleryModal({
 
         .close-label {
           font-size: 13px;
+        }
+
+        .gallery-scroll-viewport {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow-y: auto;
+          overflow-x: hidden;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE and Edge */
+          z-index: 10;
+        }
+
+        .gallery-scroll-viewport::-webkit-scrollbar {
+          display: none; /* Chrome, Safari and Opera */
+          width: 0;
+          height: 0;
         }
 
         .gallery-scroll-container {
