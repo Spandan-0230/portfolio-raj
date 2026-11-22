@@ -1,6 +1,6 @@
 <div align="center">
 
-  # ✦ Spandan Bole — Developer Portfolio
+  #  Spandan Bole — Developer Portfolio
 
   <p align="center">
     <strong>A high-performance, cinematic 3D developer portfolio featuring frame-scrubbed canvas rendering, live GitHub telemetry, interactive Three.js robotics, volumetric shockwave particle systems, and deep-dive project showcases.</strong>
