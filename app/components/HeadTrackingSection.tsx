@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import ContactForm from "./ContactForm";
+import SmokeBurst from "./SmokeBurst";
 
 const RobotViewer = dynamic(() => import("./RobotViewer"), {
   ssr: false,
@@ -91,6 +92,10 @@ export default function HeadTrackingSection() {
   // State to track when the user has actually landed on this section
   const [hasLanded, setHasLanded] = useState(false);
 
+  // 3D Robot launch states: hidden by default until 3s after landing, then smoke burst & emergence
+  const [isRobotVisible, setIsRobotVisible] = useState(false);
+  const [isSmokeActive, setIsSmokeActive] = useState(false);
+
   // Typing animation state for Line 1 ("Let’s start a") and Line 2 ("Worthwhile \n Build")
   const [text1, setText1] = useState("");
   const [text2A, setText2A] = useState("");
@@ -135,7 +140,33 @@ export default function HeadTrackingSection() {
     };
   }, []);
 
-  // 2. Smooth typing & ordered erasing loop:
+  // 2. Smoke burst & 3D Robot launch sequence:
+  // Starts 3 seconds after landing on the section.
+  // Smoke bursts at 3000ms, and the 3D model emerges smoothly from inside the smoke at 3350ms.
+  useEffect(() => {
+    if (!hasLanded) {
+      setIsRobotVisible(false);
+      setIsSmokeActive(false);
+      return;
+    }
+
+    let smokeTimer: NodeJS.Timeout | null = null;
+    let robotTimer: NodeJS.Timeout | null = null;
+
+    smokeTimer = setTimeout(() => {
+      setIsSmokeActive(true);
+      robotTimer = setTimeout(() => {
+        setIsRobotVisible(true);
+      }, 350);
+    }, 3000);
+
+    return () => {
+      if (smokeTimer) clearTimeout(smokeTimer);
+      if (robotTimer) clearTimeout(robotTimer);
+    };
+  }, [hasLanded]);
+
+  // 3. Smooth typing & ordered erasing loop:
   // Starts ONLY after user lands on the last page with a 1.5s delay
   // 1. "Let’s start a" types out smoothly
   // 2. Cursor shifts to Line 2, "Worthwhile" types out
@@ -155,7 +186,7 @@ export default function HeadTrackingSection() {
 
     const full1 = "Let’s start a";
     const full2A = "Worthwhile Build";
-    const full2B = "Together";
+    const full2B = "Together.";
     let timer: NodeJS.Timeout | null = null;
     let isCancelled = false;
 
@@ -409,7 +440,9 @@ export default function HeadTrackingSection() {
 
             {/* Freestanding 3D Robot Character anchored precisely at the user-marked area */}
             <div
-              className="robot-card-stage"
+              className={`robot-card-stage ${
+                isRobotVisible ? "robot-stage-revealed" : "robot-stage-hidden"
+              }`}
               style={
                 {
                   "--robot-right": `${ROBOT_PLACEMENT_CONFIG.rightOffsetPx}px`,
@@ -419,7 +452,10 @@ export default function HeadTrackingSection() {
                 } as React.CSSProperties
               }
             >
-              <RobotViewer />
+              <div className="robot-canvas-wrapper">
+                <RobotViewer />
+              </div>
+              <SmokeBurst isActive={isSmokeActive} />
             </div>
           </div>
         </div>
@@ -626,6 +662,43 @@ export default function HeadTrackingSection() {
           z-index: 25;
           pointer-events: none;
           user-select: none;
+        }
+
+        .robot-canvas-wrapper {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                      transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+                      filter 0.65s ease-out;
+          will-change: opacity, transform, filter;
+        }
+
+        .robot-stage-hidden .robot-canvas-wrapper {
+          opacity: 0;
+          visibility: hidden;
+          transform: scale(0.65) translateY(28px);
+          filter: blur(10px) brightness(1.5);
+          pointer-events: none;
+        }
+
+        .robot-stage-revealed .robot-canvas-wrapper {
+          opacity: 1;
+          visibility: visible;
+          transform: scale(1) translateY(0);
+          filter: blur(0px) brightness(1);
+          pointer-events: auto;
+        }
+
+        :global(.smoke-burst-canvas) {
+          position: absolute;
+          left: 50%;
+          bottom: -25px;
+          transform: translateX(-50%);
+          width: 380px;
+          height: 380px;
+          pointer-events: none;
+          z-index: 30;
         }
 
         /* Glass Blocks Container (Right block middle seam locked at 50%) */
